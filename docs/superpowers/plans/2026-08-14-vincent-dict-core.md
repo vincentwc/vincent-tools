@@ -1,49 +1,49 @@
-# Vincent Dict Core Implementation Plan
+# Vincent Dict 核心实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **面向智能体执行者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans，按任务逐项实施本计划。步骤使用复选框（`- [ ]`）语法跟踪。
 
-**Goal:** Build and publish the DDD-based Vincent Dict core, MySQL persistence, manual SQL, Java query API, and Spring Boot 2 starter without Redis or management mutations.
+**目标：** 构建并发布基于 DDD 的 Vincent Dict 核心、MySQL 持久化、手工 SQL、Java 查询 API 与 Spring Boot 2 Starter，不包含 Redis 或管理端写入变更。
 
-**Architecture:** Pure Java domain and application modules define rules and ports. A MyBatis-Plus adapter implements persistence against host-owned MySQL tables, and a Boot 2 starter selects host infrastructure, validates the manual schema, and conditionally creates the query service. Web resources are present but remain disabled until the admin plan.
+**架构：** 纯 Java 领域层和应用层模块定义规则与端口。MyBatis-Plus 适配器针对宿主拥有的 MySQL 表实现持久化；Boot 2 Starter 选择宿主基础设施、校验手工维护的 Schema，并按条件创建查询服务。Web 资源已存在，但在管理端计划完成前保持禁用。
 
-**Tech Stack:** Java 8, Maven 3.6+, Spring Boot 2.2.6.RELEASE, MyBatis-Plus 3.3.2, MySQL 5.7+, JUnit 5, AssertJ, Testcontainers 1.19.8.
+**技术栈：** Java 8、Maven 3.6+、Spring Boot 2.2.6.RELEASE、MyBatis-Plus 3.3.2、MySQL 5.7+、JUnit 5、AssertJ、Testcontainers 1.19.8。
 
-## Global Constraints
+## 全局约束
 
-- All Maven coordinates use groupId `com.vincent.tools`; development version is `1.0.0-SNAPSHOT`.
-- Technical identifiers use `dict`, not `dictionary`; published artifact names start with `vincent-`.
-- `vincent-dict-domain` must not depend on Spring, MyBatis, Redis, HTTP, Jackson, or Lombok.
-- Java source and target compatibility are exactly 1.8; do not use records, sealed classes, `List.of`, or post-Java-8 APIs.
-- Spring Boot compatibility baseline is exactly `2.2.6.RELEASE`; MyBatis-Plus baseline is exactly `3.3.2`.
-- Database support is MySQL 5.7+ only; the component never creates or migrates tables at runtime.
-- Tenant IDs are nonblank strings up to 64 characters; reserved value `"0"` represents default items.
-- Dict and item codes must match `^[A-Z][A-Z0-9_]{0,63}$`; reject rather than normalize input.
-- Dict/item database IDs are internal `BIGINT AUTO_INCREMENT` values and never part of the business query contract.
-- Domain/application code does not depend on any host response wrapper or customer-specific package.
-- Existing sibling business systems are read-only evidence; this plan modifies only `vincent-tools`.
+- 所有 Maven 坐标均使用 groupId `com.vincent.tools`；开发版本为 `1.0.0-SNAPSHOT`。
+- 技术标识使用 `dict`，而非 `dictionary`；发布的制品名称以 `vincent-` 开头。
+- `vincent-dict-domain` 不得依赖 Spring、MyBatis、Redis、HTTP、Jackson 或 Lombok。
+- Java 源码和目标兼容级别必须严格为 1.8；不得使用 records、sealed classes、`List.of` 或 Java 8 之后的 API。
+- Spring Boot 兼容性基线必须严格为 `2.2.6.RELEASE`；MyBatis-Plus 基线必须严格为 `3.3.2`。
+- 仅支持 MySQL 5.7+；组件绝不在运行时创建或迁移表。
+- 租户 ID 为最长 64 个字符的非空字符串；保留值 `"0"` 表示默认项。
+- 字典和字典项编码必须匹配 `^[A-Z][A-Z0-9_]{0,63}$`；拒绝输入，不进行规范化。
+- 字典/字典项数据库 ID 是内部 `BIGINT AUTO_INCREMENT` 值，绝不属于业务查询契约。
+- 领域/应用代码不得依赖任何宿主响应包装类或客户专用包。
+- 既有同级业务系统仅作为只读证据；本计划只修改 `vincent-tools`。
 
 ---
 
-### Task 1: Create the Maven reactor, parent POM, BOM, and module skeleton
+### Task 1: 创建 Maven Reactor、父 POM、BOM 与模块骨架
 
-**Files:**
-- Modify: `.gitignore`
-- Create: `pom.xml`
-- Create: `vincent-tools-bom/pom.xml`
-- Create: `vincent-dict/pom.xml`
-- Create: `vincent-dict/vincent-dict-domain/pom.xml`
-- Create: `vincent-dict/vincent-dict-application/pom.xml`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/pom.xml`
-- Create: `vincent-dict/vincent-dict-admin-ui/pom.xml`
-- Create: `vincent-dict/vincent-dict-web/pom.xml`
-- Create: `vincent-dict/vincent-dict-boot2-starter/pom.xml`
-- Create: `vincent-dict/vincent-dict-cache-redis-boot2-starter/pom.xml`
+**文件：**
+- 修改：`.gitignore`
+- 创建：`pom.xml`
+- 创建：`vincent-tools-bom/pom.xml`
+- 创建：`vincent-dict/pom.xml`
+- 创建：`vincent-dict/vincent-dict-domain/pom.xml`
+- 创建：`vincent-dict/vincent-dict-application/pom.xml`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/pom.xml`
+- 创建：`vincent-dict/vincent-dict-admin-ui/pom.xml`
+- 创建：`vincent-dict/vincent-dict-web/pom.xml`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/pom.xml`
+- 创建：`vincent-dict/vincent-dict-cache-redis-boot2-starter/pom.xml`
 
-**Interfaces:**
-- Consumes: none.
-- Produces: one Maven reactor with all approved artifactIds and centralized versions.
+**接口：**
+- 使用：无。
+- 产出：包含所有获准 artifactId 及集中化版本管理的一个 Maven Reactor。
 
-- [ ] **Step 1: Extend repository ignores for generated build outputs**
+- [ ] **步骤 1：扩展仓库忽略规则以覆盖构建生成物**
 
 ```gitignore
 .superpowers/
@@ -55,9 +55,9 @@
 *.iml
 ```
 
-- [ ] **Step 2: Create the root parent/aggregator POM**
+- [ ] **步骤 2：创建根父/聚合 POM**
 
-Use packaging `pom`, modules `vincent-tools-bom` and `vincent-dict`, Java 8 compiler properties, UTF-8, and these locked properties:
+使用 `pom` 打包方式、模块 `vincent-tools-bom` 和 `vincent-dict`、Java 8 编译器属性、UTF-8 及以下锁定属性：
 
 ```xml
 <groupId>com.vincent.tools</groupId>
@@ -77,11 +77,11 @@ Use packaging `pom`, modules `vincent-tools-bom` and `vincent-dict`, Java 8 comp
 </properties>
 ```
 
-Import `spring-boot-dependencies` in `dependencyManagement`; manage JUnit, AssertJ, Testcontainers, MySQL connector `5.1.49`, and all Vincent module versions. Configure `maven-compiler-plugin 3.11.0`, `maven-surefire-plugin 3.2.5`, `maven-failsafe-plugin 3.2.5`, and `maven-enforcer-plugin 3.4.1` with Maven `3.6.0+` and Java `[1.8,)`. Add `animal-sniffer-maven-plugin 1.23` with the `java18` signature so builds running on newer JDKs cannot call post-Java-8 APIs. Configure source jars for all published Java modules and Javadoc jars for public API modules. Do not commit `distributionManagement`, repository credentials, or internal repository URLs; deployment supplies `-DaltDeploymentRepository` or CI Maven settings externally.
+在 `dependencyManagement` 中导入 `spring-boot-dependencies`；统一管理 JUnit、AssertJ、Testcontainers、MySQL 连接器 `5.1.49` 和所有 Vincent 模块版本。配置 `maven-compiler-plugin 3.11.0`、`maven-surefire-plugin 3.2.5`、`maven-failsafe-plugin 3.2.5`、`maven-enforcer-plugin 3.4.1`，并要求 Maven `3.6.0+` 与 Java `[1.8,)`。添加使用 `java18` 签名的 `animal-sniffer-maven-plugin 1.23`，以保证在较新 JDK 上运行的构建不能调用 Java 8 之后的 API。为所有发布的 Java 模块配置源码 JAR，为公共 API 模块配置 Javadoc JAR。不得提交 `distributionManagement`、仓库凭据或内部仓库 URL；部署时由外部提供 `-DaltDeploymentRepository` 或 CI Maven 设置。
 
-- [ ] **Step 3: Create the public BOM**
+- [ ] **步骤 3：创建公开 BOM**
 
-`vincent-tools-bom/pom.xml` must inherit the root and contain only `dependencyManagement` entries for:
+`vincent-tools-bom/pom.xml` 必须继承根 POM，且只包含以下 `dependencyManagement` 条目：
 
 ```text
 vincent-dict-domain
@@ -93,11 +93,11 @@ vincent-dict-boot2-starter
 vincent-dict-cache-redis-boot2-starter
 ```
 
-Do not put build plugins or third-party library versions in the public BOM.
+不得在公开 BOM 中放入构建插件或第三方库版本。
 
-- [ ] **Step 4: Create the dict aggregator and leaf POMs**
+- [ ] **步骤 4：创建 dict 聚合模块与叶子 POM**
 
-The dependency direction must be encoded exactly:
+必须严格编码以下依赖方向：
 
 ```text
 domain <- application <- infra-mybatis <- boot2-starter
@@ -107,20 +107,20 @@ admin-ui <───────────────────────�
 application <- cache-redis-boot2-starter
 ```
 
-Keep the Redis module in the reactor but empty until the Redis plan. Mark Spring MVC dependencies in `vincent-dict-web` as optional so the core Starter cannot turn a non-Web host into a Web application.
+将 Redis 模块保留在 Reactor 中，但在 Redis 计划前保持为空。在 `vincent-dict-web` 中将 Spring MVC 依赖标记为 optional，以避免核心 Starter 将非 Web 宿主变成 Web 应用。
 
-- [ ] **Step 5: Verify the empty reactor**
+- [ ] **步骤 5：验证空 Reactor**
 
-Run:
+执行：
 
 ```bash
 mvn -q -DskipTests install
 mvn -q help:effective-pom -pl vincent-tools-bom
 ```
 
-Expected: reactor `BUILD SUCCESS`; effective BOM lists Vincent artifacts without Spring build plugins.
+预期结果：Reactor `BUILD SUCCESS`；有效 BOM 列出 Vincent 制品且不含 Spring 构建插件。
 
-- [ ] **Step 6: Commit the reactor skeleton**
+- [ ] **步骤 6：提交 Reactor 骨架**
 
 ```bash
 git add .gitignore pom.xml vincent-tools-bom vincent-dict
@@ -129,25 +129,25 @@ git commit -m "build: create vincent tools reactor"
 
 ---
 
-### Task 2: Implement domain primitives and validation
+### Task 2: 实现领域基础类型与校验
 
-**Files:**
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictCode.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemCode.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/TenantId.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictStatus.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemStatus.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItemSource.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictErrorCode.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictException.java`
-- Test: `vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictCodeTest.java`
-- Test: `vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/TenantIdTest.java`
+**文件：**
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictCode.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemCode.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/TenantId.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictStatus.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemStatus.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItemSource.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictErrorCode.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictException.java`
+- 测试：`vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictCodeTest.java`
+- 测试：`vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/TenantIdTest.java`
 
-**Interfaces:**
-- Consumes: Java 8 only.
-- Produces: `DictCode.of(String)`, `ItemCode.of(String)`, `TenantId.of(String)`, `TenantId.defaultItem()`, status/source enums, and stable exceptions.
+**接口：**
+- 使用：仅 Java 8。
+- 产出：`DictCode.of(String)`、`ItemCode.of(String)`、`TenantId.of(String)`、`TenantId.defaultItem()`、状态/来源枚举和稳定异常。
 
-- [ ] **Step 1: Write failing code and tenant validation tests**
+- [ ] **步骤 1：编写预期失败的编码与租户校验测试**
 
 ```java
 class DictCodeTest {
@@ -172,19 +172,19 @@ class TenantIdTest {
 }
 ```
 
-- [ ] **Step 2: Run the domain tests and verify failure**
+- [ ] **步骤 2：运行领域测试并确认失败**
 
-Run:
+执行：
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-domain test
 ```
 
-Expected: compilation fails because value objects do not exist.
+预期结果：因值对象尚不存在而编译失败。
 
-- [ ] **Step 3: Implement immutable value objects and stable errors**
+- [ ] **步骤 3：实现不可变值对象与稳定错误**
 
-Implement `DictCode` and `ItemCode` with the exact regex and maximum length. Implement `TenantId` with a private constructor and two factories:
+使用精确的正则表达式和最大长度实现 `DictCode` 与 `ItemCode`。使用私有构造器和两个工厂方法实现 `TenantId`：
 
 ```java
 public final class TenantId {
@@ -204,9 +204,9 @@ public final class TenantId {
 }
 ```
 
-Implement value equality/hashCode and redact neither code nor tenant in `toString`; these identifiers are not secrets.
+实现值相等性/hashCode；在 `toString` 中不得脱敏编码或租户，这些标识不是秘密信息。
 
-Define the complete first-version `DictErrorCode` enum now so later modules do not invent strings:
+现在定义完整的第一版 `DictErrorCode` 枚举，避免后续模块自行创建字符串：
 
 ```text
 INVALID_ARGUMENT
@@ -226,16 +226,16 @@ SCHEMA_VERSION_MISMATCH
 CONFIGURATION_INVALID
 ```
 
-- [ ] **Step 4: Run tests and dependency checks**
+- [ ] **步骤 4：运行测试与依赖检查**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-domain test
 mvn -q -pl vincent-dict/vincent-dict-domain dependency:tree
 ```
 
-Expected: tests pass; compile dependency tree contains only the JDK.
+预期结果：测试通过；编译依赖树仅包含 JDK。
 
-- [ ] **Step 5: Commit domain primitives**
+- [ ] **步骤 5：提交领域基础类型**
 
 ```bash
 git add vincent-dict/vincent-dict-domain
@@ -244,22 +244,22 @@ git commit -m "feat(dict): add domain value objects"
 
 ---
 
-### Task 3: Implement Dict and DictItem aggregate rules
+### Task 3: 实现 Dict 与 DictItem 聚合规则
 
-**Files:**
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/Dict.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItem.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItemPolicy.java`
-- Create: `vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemCodeUsage.java`
-- Create: `vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/TestFixtures.java`
-- Test: `vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictTest.java`
-- Test: `vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictItemPolicyTest.java`
+**文件：**
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/Dict.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItem.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/DictItemPolicy.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/main/java/com/vincent/tools/dict/domain/ItemCodeUsage.java`
+- 创建：`vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/TestFixtures.java`
+- 测试：`vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictTest.java`
+- 测试：`vincent-dict/vincent-dict-domain/src/test/java/com/vincent/tools/dict/domain/DictItemPolicyTest.java`
 
-**Interfaces:**
-- Consumes: Task 2 value objects and `DictException`.
-- Produces: aggregate factories/reconstitution methods and `DictItemPolicy.checkCreate(TenantId, ItemCodeUsage, int, int)`.
+**接口：**
+- 使用：Task 2 的值对象和 `DictException`。
+- 产出：聚合工厂/重建方法及 `DictItemPolicy.checkCreate(TenantId, ItemCodeUsage, int, int)`。
 
-- [ ] **Step 1: Write failing aggregate state-transition tests**
+- [ ] **步骤 1：编写预期失败的聚合状态转换测试**
 
 ```java
 class DictTest {
@@ -281,7 +281,7 @@ class DictTest {
 }
 ```
 
-- [ ] **Step 2: Write failing default/tenant collision and limit tests**
+- [ ] **步骤 2：编写预期失败的默认项/租户项冲突与数量上限测试**
 
 ```java
 class DictItemPolicyTest {
@@ -302,19 +302,19 @@ class DictItemPolicyTest {
 }
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [ ] **步骤 3：运行测试并确认其失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-domain test
 ```
 
-Expected: compilation fails for missing aggregate and policy types.
+预期结果：因缺少聚合和策略类型而编译失败。
 
-- [ ] **Step 4: Implement aggregates without framework annotations**
+- [ ] **步骤 4：不使用框架注解实现聚合**
 
-Use private fields, explicit factories, and package-visible reconstitution methods. Creation sets `version=0`, `deleted=false`, and maintenance metadata. Reconstitution accepts persisted ID/version/deletion state. `DictItem` exposes no method that changes code, dict ID, or tenant ID. Restore methods reject nondeleted state; item restore requires an application-provided `dictRestored=true` fact.
+使用私有字段、显式工厂和包可见的重建方法。创建时设置 `version=0`、`deleted=false` 及维护元数据。重建方法接收持久化的 ID/版本/删除状态。`DictItem` 不得暴露变更编码、字典 ID 或租户 ID 的方法。恢复方法应拒绝未删除状态；恢复字典项需要应用层提供 `dictRestored=true` 这一事实。
 
-The policy must implement the exact matrix:
+策略必须严格实现以下矩阵：
 
 ```text
 create default + any historical default/tenant use = conflict
@@ -323,15 +323,15 @@ create tenant  + same-tenant historical use         = conflict
 create tenant  + other-tenant-only historical use   = allowed
 ```
 
-- [ ] **Step 5: Run domain tests**
+- [ ] **步骤 5：运行领域测试**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-domain test
 ```
 
-Expected: all aggregate and policy tests pass.
+预期结果：所有聚合和策略测试通过。
 
-- [ ] **Step 6: Commit aggregates**
+- [ ] **步骤 6：提交聚合**
 
 ```bash
 git add vincent-dict/vincent-dict-domain
@@ -340,28 +340,28 @@ git commit -m "feat(dict): implement domain aggregates"
 
 ---
 
-### Task 4: Define and implement the Java query application API
+### Task 4: 定义并实现 Java 查询应用 API
 
-**Files:**
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictQueryService.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DefaultDictQueryService.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictItemView.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/EffectiveDictData.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/EffectiveItemData.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/TenantProvider.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/SingleTenantProvider.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictLimits.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/DictQueryRepository.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/DictCache.java`
-- Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/NoopDictCache.java`
-- Create: `vincent-dict/vincent-dict-application/src/test/java/com/vincent/tools/dict/application/ApplicationFixtures.java`
-- Test: `vincent-dict/vincent-dict-application/src/test/java/com/vincent/tools/dict/application/DefaultDictQueryServiceTest.java`
+**文件：**
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictQueryService.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DefaultDictQueryService.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictItemView.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/EffectiveDictData.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/EffectiveItemData.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/TenantProvider.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/SingleTenantProvider.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/DictLimits.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/DictQueryRepository.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/DictCache.java`
+- 创建：`vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/NoopDictCache.java`
+- 创建：`vincent-dict/vincent-dict-application/src/test/java/com/vincent/tools/dict/application/ApplicationFixtures.java`
+- 测试：`vincent-dict/vincent-dict-application/src/test/java/com/vincent/tools/dict/application/DefaultDictQueryServiceTest.java`
 
-**Interfaces:**
-- Consumes: domain codes, tenant IDs, status/source enums.
-- Produces: the four `DictQueryService` overloads, an internal ordered repository snapshot, and the cache-aside port used by both later plans.
+**接口：**
+- 使用：领域编码、租户 ID、状态/来源枚举。
+- 产出：四个 `DictQueryService` 重载、内部有序仓储快照，以及后续两份计划共同使用的旁路缓存端口。
 
-- [ ] **Step 1: Write failing query semantic tests with in-memory fakes**
+- [ ] **步骤 1：使用内存替身编写预期失败的查询语义测试**
 
 ```java
 class DefaultDictQueryServiceTest {
@@ -391,15 +391,15 @@ class DefaultDictQueryServiceTest {
 }
 ```
 
-- [ ] **Step 2: Run application tests and verify failure**
+- [ ] **步骤 2：运行应用测试并确认失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-application -am test
 ```
 
-Expected: compilation fails for missing query types.
+预期结果：因缺少查询类型而编译失败。
 
-- [ ] **Step 3: Define the exact public query contract**
+- [ ] **步骤 3：定义精确的公共查询契约**
 
 ```java
 public interface DictQueryService {
@@ -410,9 +410,9 @@ public interface DictQueryService {
 }
 ```
 
-`DictItemView` must be final and immutable with only `code`, `name`, `description`, `sortNo`, and `DictItemSource source`; return unmodifiable lists.
+`DictItemView` 必须是 final 且不可变，仅包含 `code`、`name`、`description`、`sortNo` 和 `DictItemSource source`；返回不可修改的列表。
 
-The repository contract is exact:
+仓储契约必须严格如下：
 
 ```java
 public interface DictQueryRepository {
@@ -420,11 +420,11 @@ public interface DictQueryRepository {
 }
 ```
 
-`EffectiveDictData` carries only `boolean enabled` plus `List<EffectiveItemData>`. Internal item data includes persisted `id` for the final `sortNo/code/id` order; mapping to `DictItemView` removes the ID.
+`EffectiveDictData` 仅承载 `boolean enabled` 与 `List<EffectiveItemData>`。内部字典项数据包含持久化的 `id`，以支持最终的 `sortNo/code/id` 排序；映射至 `DictItemView` 时移除 ID。
 
-- [ ] **Step 4: Implement tenant resolution, caching seam, and query semantics**
+- [ ] **步骤 4：实现租户解析、缓存接缝与查询语义**
 
-The default no-host provider returns `Optional.of("0")` to select default-only mode. A host provider returning `Optional.empty()` causes `TENANT_CONTEXT_MISSING`. Define the cache seam from the start as:
+默认的无宿主 Provider 返回 `Optional.of("0")` 以选择仅默认项模式。宿主 Provider 返回 `Optional.empty()` 时触发 `TENANT_CONTEXT_MISSING`。从一开始将缓存接缝定义为：
 
 ```java
 public interface DictCache {
@@ -438,18 +438,18 @@ public interface DictCache {
 }
 ```
 
-`NoopDictCache.load` calls its loader exactly once. `DefaultDictQueryService` delegates one repository query through that loader, maps the internal ordered snapshot, checks the 2,000-item configured maximum, returns an unmodifiable list, and filters the returned list for `findEffectiveItem`.
+`NoopDictCache.load` 恰好调用一次其加载器。`DefaultDictQueryService` 通过该加载器委派一次仓储查询，映射内部有序快照，检查配置的 2,000 项上限，返回不可修改列表，并对返回列表进行过滤以实现 `findEffectiveItem`。
 
-- [ ] **Step 5: Run application tests and forbidden-dependency check**
+- [ ] **步骤 5：运行应用测试与禁止依赖检查**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-application -am test
 mvn -q -pl vincent-dict/vincent-dict-application dependency:tree
 ```
 
-Expected: tests pass; application compile dependencies include only `vincent-dict-domain` and JDK types.
+预期结果：测试通过；应用编译依赖仅包含 `vincent-dict-domain` 和 JDK 类型。
 
-- [ ] **Step 6: Commit the query API**
+- [ ] **步骤 6：提交查询 API**
 
 ```bash
 git add vincent-dict/vincent-dict-application
@@ -458,27 +458,27 @@ git commit -m "feat(dict): add query application service"
 
 ---
 
-### Task 5: Add manual MySQL schema, PO mappings, and query repository
+### Task 5: 添加手工 MySQL Schema、PO 映射与查询仓储
 
-**Files:**
-- Create: `vincent-dict/sql/mysql/1.0.0/001-init.sql`
-- Create: `vincent-dict/sql/mysql/README.md`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/po/DictPo.java`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/po/DictItemPo.java`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.java`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictItemMapper.java`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/resources/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.xml`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/resources/com/vincent/tools/dict/infra/mybatis/mapper/DictItemMapper.xml`
-- Create: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/MybatisDictQueryRepository.java`
-- Test: `vincent-dict/vincent-dict-infra-mybatis/src/test/java/com/vincent/tools/dict/infra/mybatis/MybatisDictQueryRepositoryIT.java`
+**文件：**
+- 创建：`vincent-dict/sql/mysql/1.0.0/001-init.sql`
+- 创建：`vincent-dict/sql/mysql/README.md`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/po/DictPo.java`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/po/DictItemPo.java`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.java`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictItemMapper.java`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/resources/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.xml`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/resources/com/vincent/tools/dict/infra/mybatis/mapper/DictItemMapper.xml`
+- 创建：`vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/MybatisDictQueryRepository.java`
+- 测试：`vincent-dict/vincent-dict-infra-mybatis/src/test/java/com/vincent/tools/dict/infra/mybatis/MybatisDictQueryRepositoryIT.java`
 
-**Interfaces:**
-- Consumes: `DictQueryRepository` and `DictItemView` from Task 4.
-- Produces: schema version `1`, three tables, and one-query effective item lookup.
+**接口：**
+- 使用：Task 4 中的 `DictQueryRepository` 与 `DictItemView`。
+- 产出：Schema 版本 `1`、三张表和单次查询的有效字典项查找。
 
-- [ ] **Step 1: Write the failing MySQL integration test**
+- [ ] **步骤 1：编写预期失败的 MySQL 集成测试**
 
-Use Testcontainers `MySQLContainer<?>` with image `mysql:5.7.44`. Execute `001-init.sql`, insert one active dict, two default items, one current-tenant item, and one other-tenant item, then assert:
+使用镜像 `mysql:5.7.44` 的 Testcontainers `MySQLContainer<?>`。执行 `001-init.sql`，插入一个启用字典、两个默认项、一个当前租户项和一个其他租户项，然后断言：
 
 ```java
 assertThat(repository.findEffective("ORDER_STATUS", "tenant-a"))
@@ -487,34 +487,34 @@ assertThat(repository.findEffective("ORDER_STATUS", "tenant-a"))
     .doesNotContain("TENANT_B");
 ```
 
-Also assert a disabled dict returns a known disabled result rather than silently looking missing.
+还应断言禁用字典返回可识别的禁用结果，而不是被静默地视为不存在。
 
-- [ ] **Step 2: Run the integration test and verify failure**
+- [ ] **步骤 2：运行集成测试并确认失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-infra-mybatis -am -Dtest=MybatisDictQueryRepositoryIT test
 ```
 
-Expected: FAIL because SQL and mappings do not exist.
+预期结果：因 SQL 和映射尚不存在而失败。
 
-- [ ] **Step 3: Write strict initialization SQL**
+- [ ] **步骤 3：编写严格的初始化 SQL**
 
-Create tables in this order: `vin_dict_meta`, `vin_dict`, `vin_dict_item`. Use InnoDB, `utf8mb4`, `BIGINT AUTO_INCREMENT`, `DATETIME(3)`, status `TINYINT` (`0=disabled`, `1=enabled`), deletion `TINYINT` (`0=present`, `1=deleted`), and optimistic `version INT NOT NULL DEFAULT 0`. Use `ascii_bin` for code columns and `utf8mb4_bin` for tenant ID. Insert exactly one meta row:
+按以下顺序创建表：`vin_dict_meta`、`vin_dict`、`vin_dict_item`。使用 InnoDB、`utf8mb4`、`BIGINT AUTO_INCREMENT`、`DATETIME(3)`、状态 `TINYINT`（`0=disabled`、`1=enabled`）、删除标记 `TINYINT`（`0=present`、`1=deleted`）以及乐观锁 `version INT NOT NULL DEFAULT 0`。编码列使用 `ascii_bin`，租户 ID 使用 `utf8mb4_bin`。严格插入一条元数据记录：
 
 ```sql
 INSERT INTO vin_dict_meta (id, schema_version, updated_at)
 VALUES (1, '1', CURRENT_TIMESTAMP(3));
 ```
 
-Do not use `IF NOT EXISTS`; do not add business seed rows.
+不得使用 `IF NOT EXISTS`；不得添加业务种子数据。
 
-- [ ] **Step 4: Implement explicit MyBatis mappings**
+- [ ] **步骤 4：实现显式 MyBatis 映射**
 
-Do not rely on host global logical-delete configuration. The effective item SQL must filter dict/item `deleted=0`, dict/item `status=1`, and item tenant scope `IN ('0', #{tenantId})`, then order by `sort_no, code, id`. Select internal item ID only for deterministic ordering; do not expose it from the application DTO.
+不得依赖宿主全局逻辑删除配置。有效字典项 SQL 必须过滤字典/字典项的 `deleted=0`、字典/字典项的 `status=1` 以及字典项租户范围 `IN ('0', #{tenantId})`，随后按 `sort_no, code, id` 排序。仅为确定性排序查询内部字典项 ID；不得通过应用 DTO 暴露它。
 
-- [ ] **Step 5: Run integration tests including constraints**
+- [ ] **步骤 5：运行包含约束验证的集成测试**
 
-Add assertions that:
+添加以下断言：
 
 ```text
 duplicate dict code fails
@@ -523,15 +523,15 @@ same tenant item code in two different tenants succeeds
 meta schema version equals 1
 ```
 
-Run:
+执行：
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-infra-mybatis -am verify
 ```
 
-Expected: all unit and MySQL integration tests pass.
+预期结果：所有单元测试与 MySQL 集成测试通过。
 
-- [ ] **Step 6: Commit schema and read adapter**
+- [ ] **步骤 6：提交 Schema 与读适配器**
 
 ```bash
 git add vincent-dict/sql vincent-dict/vincent-dict-infra-mybatis
@@ -540,25 +540,25 @@ git commit -m "feat(dict): add mysql query adapter"
 
 ---
 
-### Task 6: Build Boot 2 auto-configuration and fail-fast schema validation
+### Task 6: 构建 Boot 2 自动配置与快速失败的 Schema 校验
 
-**Files:**
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictProperties.java`
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictCoreAutoConfiguration.java`
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictInfrastructureResolver.java`
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictSchemaValidator.java`
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/resources/META-INF/spring.factories`
-- Create: `vincent-dict/vincent-dict-boot2-starter/src/main/resources/META-INF/additional-spring-configuration-metadata.json`
-- Test: `vincent-dict/vincent-dict-boot2-starter/src/test/java/com/vincent/tools/dict/boot2/DictCoreAutoConfigurationTest.java`
-- Test: `vincent-dict/vincent-dict-boot2-starter/src/test/java/com/vincent/tools/dict/boot2/DictSchemaValidatorIT.java`
+**文件：**
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictProperties.java`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictCoreAutoConfiguration.java`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictInfrastructureResolver.java`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/java/com/vincent/tools/dict/boot2/DictSchemaValidator.java`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/resources/META-INF/spring.factories`
+- 创建：`vincent-dict/vincent-dict-boot2-starter/src/main/resources/META-INF/additional-spring-configuration-metadata.json`
+- 测试：`vincent-dict/vincent-dict-boot2-starter/src/test/java/com/vincent/tools/dict/boot2/DictCoreAutoConfigurationTest.java`
+- 测试：`vincent-dict/vincent-dict-boot2-starter/src/test/java/com/vincent/tools/dict/boot2/DictSchemaValidatorIT.java`
 
-**Interfaces:**
-- Consumes: query service, MyBatis mapper XML, host `DataSource`, `SqlSessionFactory`, and `PlatformTransactionManager`.
-- Produces: `vincent.dict.*` configuration and conditional `DictQueryService` bean.
+**接口：**
+- 使用：查询服务、MyBatis mapper XML、宿主 `DataSource`、`SqlSessionFactory` 与 `PlatformTransactionManager`。
+- 产出：`vincent.dict.*` 配置及条件化的 `DictQueryService` Bean。
 
-- [ ] **Step 1: Write failing ApplicationContextRunner tests**
+- [ ] **步骤 1：编写预期失败的 ApplicationContextRunner 测试**
 
-Cover exact cases:
+覆盖以下精确场景：
 
 ```java
 contextRunner.withPropertyValues("vincent.dict.enabled=false")
@@ -568,19 +568,19 @@ contextRunner.withBean(TenantProvider.class, () -> () -> Optional.of("tenant-a")
     .run(context -> assertThat(context).hasSingleBean(DictQueryService.class));
 ```
 
-Add failures for invalid limits, multiple DataSources without a primary/explicit name, and an explicit nonexistent bean name.
+增加对无效上限、没有 primary/显式名称时存在多个 DataSource，以及显式指定不存在的 Bean 名称等失败场景的覆盖。
 
-- [ ] **Step 2: Run starter tests and verify failure**
+- [ ] **步骤 2：运行 Starter 测试并确认失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-boot2-starter -am test
 ```
 
-Expected: compilation fails for missing configuration classes.
+预期结果：因缺少配置类而编译失败。
 
-- [ ] **Step 3: Implement validated configuration properties**
+- [ ] **步骤 3：实现经过校验的配置属性**
 
-Use prefix `vincent.dict` with defaults:
+使用前缀 `vincent.dict` 及以下默认值：
 
 ```text
 enabled=true
@@ -594,30 +594,30 @@ limits.default-page-size=20
 limits.max-page-size=100
 ```
 
-Support optional bean names `data-source-bean-name`, `sql-session-factory-bean-name`, and `transaction-manager-bean-name`. If one is set in a multi-infrastructure host, require all three. Validate that the selected `SqlSessionFactory` environment uses the selected DataSource and that the transaction manager exposes the same resource factory.
+支持可选 Bean 名称 `data-source-bean-name`、`sql-session-factory-bean-name` 和 `transaction-manager-bean-name`。若在多基础设施宿主中设置其中一个，则必须同时设置三个。校验所选 `SqlSessionFactory` 环境使用所选 DataSource，且事务管理器暴露相同的资源工厂。
 
-- [ ] **Step 4: Implement Boot 2 infrastructure resolution and Mapper registration**
+- [ ] **步骤 4：实现 Boot 2 基础设施解析与 Mapper 注册**
 
-Use `ObjectProvider`, bean names, `@Primary` resolution, and a programmatic `MapperScannerConfigurer` with explicit `sqlSessionFactoryBeanName`; never mutate host MyBatis global configuration. Register auto-configuration via:
+使用 `ObjectProvider`、Bean 名称、`@Primary` 解析，以及带显式 `sqlSessionFactoryBeanName` 的编程式 `MapperScannerConfigurer`；绝不修改宿主 MyBatis 全局配置。通过以下内容注册自动配置：
 
 ```properties
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.vincent.tools.dict.boot2.DictCoreAutoConfiguration
 ```
 
-- [ ] **Step 5: Implement read-only Schema validation**
+- [ ] **步骤 5：实现只读 Schema 校验**
 
-On enabled startup, query `information_schema.tables` for `vin_dict_meta`, `vin_dict`, and `vin_dict_item`, then query meta row `id=1`. Missing tables throw `SCHEMA_MISSING`; version other than `"1"` throws `SCHEMA_VERSION_MISMATCH` with the required SQL path `sql/mysql/1.0.0/001-init.sql`. Execute no DDL.
+启用状态下启动时，查询 `information_schema.tables` 以检查 `vin_dict_meta`、`vin_dict` 和 `vin_dict_item`，随后查询 `id=1` 的元数据记录。缺少表时抛出 `SCHEMA_MISSING`；版本不是 `"1"` 时抛出 `SCHEMA_VERSION_MISMATCH`，并给出必需 SQL 路径 `sql/mysql/1.0.0/001-init.sql`。不得执行任何 DDL。
 
-- [ ] **Step 6: Run context and MySQL validation tests**
+- [ ] **步骤 6：运行上下文与 MySQL 校验测试**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-boot2-starter -am verify
 ```
 
-Expected: all contexts and MySQL schema cases pass; a disabled component does not touch the database.
+预期结果：所有上下文和 MySQL Schema 场景均通过；禁用组件不会访问数据库。
 
-- [ ] **Step 7: Commit the starter**
+- [ ] **步骤 7：提交 Starter**
 
 ```bash
 git add vincent-dict/vincent-dict-boot2-starter
@@ -626,26 +626,26 @@ git commit -m "feat(dict): add boot2 core starter"
 
 ---
 
-### Task 7: Add the compatibility example, consumer documentation, and core acceptance checks
+### Task 7: 添加兼容性示例、消费者文档与核心验收检查
 
-**Files:**
-- Create: `vincent-dict/vincent-dict-example-boot2/pom.xml`
-- Create: `vincent-dict/vincent-dict-example-boot2/src/main/java/com/vincent/tools/dict/example/DictExampleApplication.java`
-- Create: `vincent-dict/vincent-dict-example-boot2/src/main/java/com/vincent/tools/dict/example/ExampleTenantProvider.java`
-- Create: `vincent-dict/vincent-dict-example-boot2/src/main/resources/application.yml`
-- Create: `vincent-dict/vincent-dict-example-boot2/src/test/java/com/vincent/tools/dict/example/DictExampleApplicationIT.java`
-- Create: `README.md`
-- Create: `vincent-dict/README.md`
-- Modify: `vincent-dict/pom.xml`
-- Modify: `vincent-tools-bom/pom.xml`
+**文件：**
+- 创建：`vincent-dict/vincent-dict-example-boot2/pom.xml`
+- 创建：`vincent-dict/vincent-dict-example-boot2/src/main/java/com/vincent/tools/dict/example/DictExampleApplication.java`
+- 创建：`vincent-dict/vincent-dict-example-boot2/src/main/java/com/vincent/tools/dict/example/ExampleTenantProvider.java`
+- 创建：`vincent-dict/vincent-dict-example-boot2/src/main/resources/application.yml`
+- 创建：`vincent-dict/vincent-dict-example-boot2/src/test/java/com/vincent/tools/dict/example/DictExampleApplicationIT.java`
+- 创建：`README.md`
+- 创建：`vincent-dict/README.md`
+- 修改：`vincent-dict/pom.xml`
+- 修改：`vincent-tools-bom/pom.xml`
 
-**Interfaces:**
-- Consumes: published BOM, core Starter, manual SQL, and `TenantProvider`.
-- Produces: an executable compatibility proof and copy-paste consumer instructions.
+**接口：**
+- 使用：已发布的 BOM、核心 Starter、手工 SQL 与 `TenantProvider`。
+- 产出：可执行的兼容性证明和可直接复制粘贴的消费者说明。
 
-- [ ] **Step 1: Write the failing example-host integration test**
+- [ ] **步骤 1：编写预期失败的示例宿主集成测试**
 
-Start a MySQL 5.7 container, apply manual SQL before Spring startup, set host properties dynamically, and assert:
+启动 MySQL 5.7 容器，在 Spring 启动前执行手工 SQL，动态设置宿主属性，并断言：
 
 ```java
 assertThat(queryService.listEffectiveItems("ORDER_STATUS"))
@@ -653,19 +653,19 @@ assertThat(queryService.listEffectiveItems("ORDER_STATUS"))
     .containsExactly("CREATED", "WAIT_CONFIRM");
 ```
 
-The example host must use Spring Boot `2.2.6.RELEASE`, Java 8, and the public Starter dependency rather than reaching into internal modules.
+示例宿主必须使用 Spring Boot `2.2.6.RELEASE`、Java 8 以及公开的 Starter 依赖，而不是访问内部模块。
 
-- [ ] **Step 2: Run the example test and verify failure before wiring**
+- [ ] **步骤 2：在接线前运行示例测试并确认失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-example-boot2 -am test
 ```
 
-Expected: FAIL until the example app and provider are registered.
+预期结果：在示例应用和 Provider 注册前失败。
 
-- [ ] **Step 3: Implement the minimal example host**
+- [ ] **步骤 3：实现最小示例宿主**
 
-Register:
+注册：
 
 ```java
 @Bean
@@ -674,33 +674,33 @@ TenantProvider tenantProvider() {
 }
 ```
 
-Keep demo data in test resources only. Do not add an HTTP query endpoint.
+演示数据仅保留在测试资源中。不得添加 HTTP 查询端点。
 
-- [ ] **Step 4: Write core consumer documentation**
+- [ ] **步骤 4：编写核心消费者文档**
 
-Document BOM import, core Starter dependency, manual SQL, required MySQL privileges, `TenantProvider`, explicit-tenant batch API, no-provider single-tenant behavior, data source selection, code rules, item limits, exception codes, and schema upgrade policy. Include the statement: “Vincent Dict never runs DDL at application startup.”
+记录 BOM 导入、核心 Starter 依赖、手工 SQL、所需 MySQL 权限、`TenantProvider`、显式租户批量 API、无 Provider 时的单租户行为、数据源选择、编码规则、字典项上限、异常代码和 Schema 升级策略。包括以下声明：“Vincent Dict never runs DDL at application startup.”
 
-- [ ] **Step 5: Run the complete core acceptance suite**
+- [ ] **步骤 5：运行完整核心验收套件**
 
 ```bash
 mvn -q clean verify -DskipFrontend
 mvn -q -pl vincent-dict/vincent-dict-boot2-starter dependency:tree
 ```
 
-Expected: reactor passes; core Starter dependency tree contains no Redis and does not require Spring MVC to start a non-Web context.
+预期结果：Reactor 通过；核心 Starter 依赖树不包含 Redis，且启动非 Web 上下文不需要 Spring MVC。
 
-- [ ] **Step 6: Commit core documentation and compatibility proof**
+- [ ] **步骤 6：提交核心文档与兼容性证明**
 
 ```bash
 git add README.md vincent-tools-bom vincent-dict
 git commit -m "docs(dict): add core usage and boot2 example"
 ```
 
-## Core Plan Exit Criteria
+## 核心计划退出标准
 
-- The full reactor builds on Java 8 and Maven 3.6+.
-- Domain and application modules contain no forbidden framework dependencies.
-- Manual SQL creates exactly `vin_dict_meta`, `vin_dict`, and `vin_dict_item` with Schema version `1`.
-- A non-Web Boot 2.2.6 host can query default and tenant-effective items.
-- Missing/incompatible schema and ambiguous infrastructure fail at startup with stable errors.
-- Core Starter dependency tree contains no Redis and does not force a Web application.
+- 完整 Reactor 可在 Java 8 和 Maven 3.6+ 上构建。
+- 领域和应用模块不包含任何被禁止的框架依赖。
+- 手工 SQL 严格创建 `vin_dict_meta`、`vin_dict` 与 `vin_dict_item`，Schema 版本为 `1`。
+- 非 Web 的 Boot 2.2.6 宿主可以查询默认项和租户生效项。
+- 缺失/不兼容的 Schema 与存在歧义的基础设施会在启动时以稳定错误快速失败。
+- 核心 Starter 依赖树不包含 Redis，且不会强制成为 Web 应用。

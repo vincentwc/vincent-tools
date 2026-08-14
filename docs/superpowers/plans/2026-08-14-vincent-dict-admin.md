@@ -1,33 +1,33 @@
-# Vincent Dict Admin Implementation Plan
+# Vincent Dict 管理端实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **面向智能代理执行者：** 必须使用子技能：通过 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 按任务逐项实施本计划。步骤使用复选框（`- [ ]`）语法进行跟踪。
 
-**Goal:** Add transactional dictionary maintenance, scoped authorization, tenant lookup, REST management APIs, and an embedded Vue management page to the existing core Starter.
+**目标：** 在现有核心 Starter 中增加事务性字典维护、范围授权、租户查询、REST 管理 API，以及内嵌的 Vue 管理页面。
 
-**Architecture:** Application command services enforce use-case ordering through repository, transaction, tenant-directory, operator, permission, and cache ports. MyBatis provides locked writes; Spring MVC adapters expose versioned admin APIs only in eligible Web hosts. A separately built Vue jar contributes static resources consumed by the same core Starter.
+**架构：** 应用命令服务通过仓储、事务、租户目录、操作人、权限和缓存端口，强制执行用例顺序。MyBatis 提供加锁写入；Spring MVC 适配器仅在满足条件的 Web 宿主中暴露带版本的管理 API。独立构建的 Vue jar 提供静态资源，并由同一核心 Starter 使用。
 
-**Tech Stack:** Core plan output, Java 8, Spring MVC from the host, Spring Boot 2.2.6.RELEASE, Vue 3.5.x, TypeScript 5.7.x, Vite 6.x, Element Plus 2.9.x, Vitest 2.x, Node.js 22.12.x, frontend-maven-plugin 1.12.1.
+**技术栈：** 核心计划产物、Java 8、由宿主提供的 Spring MVC、Spring Boot 2.2.6.RELEASE、Vue 3.5.x、TypeScript 5.7.x、Vite 6.x、Element Plus 2.9.x、Vitest 2.x、Node.js 22.12.x、frontend-maven-plugin 1.12.1。
 
-## Global Constraints
+## 全局约束
 
-- Complete `2026-08-14-vincent-dict-core.md` first; do not duplicate domain or query rules in Web/UI code.
-- The management UI remains inside `vincent-dict-boot2-starter`; do not create an admin Starter.
-- Spring MVC is optional/provided and must not make a non-Web host start a servlet container.
-- Admin auto-configuration requires Servlet Web, `DispatcherServlet`, `vincent.dict.admin.enabled=true`, `OperatorProvider`, and `PermissionProvider`.
-- Missing `TenantDirectory` disables and rejects tenant-item management but does not disable default-item management.
-- Every tenant-item read/write authorization check includes the target tenant ID.
-- Item/dict codes and ownership are immutable; deleted records can only be viewed or restored.
-- A dict with undeleted items cannot be deleted; deletion never cascades.
-- First version stores only created/updated metadata; do not add audit history or before/after JSON.
-- `OperatorProvider` must return a nonblank, untrimmed-free identifier of at most 64 characters; application timestamps come from an injected Java `Clock` in UTC.
-- Every write is transactional; cache invalidation occurs after a successful commit through `DictCache`.
-- UI API calls use `/vincent/dict/admin/api/v1`; UI base path defaults to `/dict-admin`.
+- 先完成 `2026-08-14-vincent-dict-core.md`；不得在 Web/UI 代码中重复实现领域或查询规则。
+- 管理 UI 保留在 `vincent-dict-boot2-starter` 内；不得创建管理端 Starter。
+- Spring MVC 为可选/由宿主提供的依赖，绝不能导致非 Web 宿主启动 servlet 容器。
+- 管理端自动配置需要 Servlet Web、`DispatcherServlet`、`vincent.dict.admin.enabled=true`、`OperatorProvider` 和 `PermissionProvider`。
+- 缺少 `TenantDirectory` 时，禁用并拒绝租户条目管理，但不得禁用默认条目管理。
+- 每次租户条目读写的授权检查都必须包含目标租户 ID。
+- 条目/字典编码和归属不可变；已删除记录仅可查看或恢复。
+- 包含未删除条目的字典不可删除；删除绝不级联。
+- 第一版仅存储创建/更新元数据；不增加审计历史或前后 JSON。
+- `OperatorProvider` 必须返回非空白、无需去除首尾空白的标识符，长度不超过 64 个字符；应用时间戳来自注入的 UTC Java `Clock`。
+- 每次写入均须在事务中执行；成功提交后通过 `DictCache` 进行缓存失效。
+- UI API 调用使用 `/vincent/dict/admin/api/v1`；UI 基路径默认为 `/dict-admin`。
 
 ---
 
-### Task 1: Define admin application contracts and transactional command services
+### Task 1：定义管理端应用契约和事务性命令服务
 
-**Files:**
+**文件：**
 - Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/admin/DictAdminPermission.java`
 - Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/admin/OperatorProvider.java`
 - Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/admin/PermissionProvider.java`
@@ -49,11 +49,11 @@
 - Create: `vincent-dict/vincent-dict-application/src/main/java/com/vincent/tools/dict/application/port/TxRunner.java`
 - Test: `vincent-dict/vincent-dict-application/src/test/java/com/vincent/tools/dict/application/admin/DefaultDictAdminServiceTest.java`
 
-**Interfaces:**
-- Consumes: domain aggregates/policies, `DictCache`, configured limits.
-- Produces: all admin commands/queries and ports consumed by MyBatis and Web tasks.
+**接口：**
+- 消费：领域聚合/策略、`DictCache`、已配置的限制。
+- 产出：所有管理端命令/查询，以及供 MyBatis 和 Web 任务使用的端口。
 
-- [ ] **Step 1: Write failing scoped-permission and tenant-directory tests**
+- [ ] **步骤 1：编写失败的范围权限和租户目录测试**
 
 ```java
 @Test void tenant_item_create_checks_target_scope_and_directory() {
@@ -73,7 +73,7 @@
 }
 ```
 
-- [ ] **Step 2: Write failing transaction, lock, deletion, and cache tests**
+- [ ] **步骤 2：编写失败的事务、锁、删除和缓存测试**
 
 ```java
 @Test void create_item_locks_dict_and_invalidates_after_commit() {
@@ -91,15 +91,15 @@
 }
 ```
 
-- [ ] **Step 3: Run tests and verify failure**
+- [ ] **步骤 3：运行测试并验证失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-application -am test
 ```
 
-Expected: compilation fails for missing admin types.
+预期结果：因缺少管理端类型而编译失败。
 
-- [ ] **Step 4: Define exact permission and admin service signatures**
+- [ ] **步骤 4：定义精确的权限和管理服务签名**
 
 ```java
 public interface PermissionProvider {
@@ -129,21 +129,21 @@ public interface DictAdminService {
 }
 ```
 
-Create immutable command/query/result classes in `application/admin`; no Web annotations.
+在 `application/admin` 中创建不可变的命令/查询/结果类；不得使用 Web 注解。
 
-- [ ] **Step 5: Implement command orchestration with TxRunner**
+- [ ] **步骤 5：使用 TxRunner 实现命令编排**
 
-Every write validates `OperatorProvider.currentOperatorId()`, derives `Instant.now(clock)`, and executes repository locks/checks and aggregate transitions inside `TxRunner.required`. Inject `java.time.Clock`; the Starter uses `Clock.systemUTC()` when the host supplies none. Call `DictCache.evictAll(dictCode)` for dict/default-item changes and `evictTenant(dictCode, tenantId)` for tenant-item changes only after `required` returns. `DictCache` implementations must absorb their own infrastructure faults; application writes must not be rolled back by cache failures.
+每次写入都要校验 `OperatorProvider.currentOperatorId()`，派生 `Instant.now(clock)`，并在 `TxRunner.required` 内执行仓储锁定/检查及聚合状态转换。注入 `java.time.Clock`；当宿主未提供时，Starter 使用 `Clock.systemUTC()`。仅在 `required` 返回后，字典/默认条目变更调用 `DictCache.evictAll(dictCode)`，租户条目变更调用 `evictTenant(dictCode, tenantId)`。`DictCache` 的实现必须自行吸收基础设施故障；缓存失败不得使应用写入回滚。
 
-- [ ] **Step 6: Run application tests**
+- [ ] **步骤 6：运行应用层测试**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-application -am test
 ```
 
-Expected: all admin orchestration tests pass with exact event order.
+预期结果：所有管理端编排测试以精确的事件顺序通过。
 
-- [ ] **Step 7: Commit admin application services**
+- [ ] **步骤 7：提交管理端应用服务**
 
 ```bash
 git add vincent-dict/vincent-dict-application
@@ -152,9 +152,9 @@ git commit -m "feat(dict): add admin application services"
 
 ---
 
-### Task 2: Implement locked MyBatis writes, restore, and pagination
+### Task 2：实现带锁的 MyBatis 写入、恢复和分页
 
-**Files:**
+**文件：**
 - Modify: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.java`
 - Modify: `vincent-dict/vincent-dict-infra-mybatis/src/main/java/com/vincent/tools/dict/infra/mybatis/mapper/DictItemMapper.java`
 - Modify: `vincent-dict/vincent-dict-infra-mybatis/src/main/resources/com/vincent/tools/dict/infra/mybatis/mapper/DictMapper.xml`
@@ -164,34 +164,34 @@ git commit -m "feat(dict): add admin application services"
 - Test: `vincent-dict/vincent-dict-infra-mybatis/src/test/java/com/vincent/tools/dict/infra/mybatis/MybatisDictAdminRepositoryIT.java`
 - Test: `vincent-dict/vincent-dict-infra-mybatis/src/test/java/com/vincent/tools/dict/infra/mybatis/ConcurrentItemCreateIT.java`
 
-**Interfaces:**
-- Consumes: `DictAdminRepository`, `TxRunner`, aggregate reconstitution methods.
-- Produces: transactional CRUD, `SELECT ... FOR UPDATE`, optimistic updates, restore and bounded paging.
+**接口：**
+- 消费：`DictAdminRepository`、`TxRunner`、聚合重建方法。
+- 产出：事务性 CRUD、`SELECT ... FOR UPDATE`、乐观锁更新、恢复和有界分页。
 
-- [ ] **Step 1: Write failing CRUD and restore integration tests**
+- [ ] **步骤 1：编写失败的 CRUD 和恢复集成测试**
 
-Cover create/update/status/delete/restore for dict and item. Assert immutable columns never appear in update SQL. Assert a deleted item remains on the unique key and can be restored only when its dict is present.
+覆盖字典和条目的创建/更新/状态变更/删除/恢复。断言不可变列绝不出现在更新 SQL 中。断言已删除条目仍保留在唯一键上，且仅当其字典存在时才能恢复。
 
 ```java
 assertThat(repository.restoreItem(itemId, operator, now)).isEqualTo(1);
 assertThat(repository.findItem(itemId).isDeleted()).isFalse();
 ```
 
-- [ ] **Step 2: Write the failing concurrency test**
+- [ ] **步骤 2：编写失败的并发测试**
 
-Use two threads and latches to concurrently create default `WAIT_CONFIRM` and tenant `WAIT_CONFIRM` under the same dict. Exactly one transaction succeeds; the other returns `DICT_ITEM_CODE_CONFLICT`. Verify no deadlock and only one row exists.
+使用两个线程和闩锁，在同一字典下并发创建默认 `WAIT_CONFIRM` 和租户 `WAIT_CONFIRM`。恰有一个事务成功；另一个返回 `DICT_ITEM_CODE_CONFLICT`。验证没有死锁，且仅存在一行记录。
 
-- [ ] **Step 3: Run integration tests and verify failure**
+- [ ] **步骤 3：运行集成测试并验证失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-infra-mybatis -am -Dtest=MybatisDictAdminRepositoryIT,ConcurrentItemCreateIT test
 ```
 
-Expected: FAIL for missing admin repository methods.
+预期结果：因缺少管理端仓储方法而失败。
 
-- [ ] **Step 4: Implement explicit lock/check/update SQL**
+- [ ] **步骤 4：实现显式的加锁/检查/更新 SQL**
 
-Required statements include:
+必需的语句包括：
 
 ```sql
 SELECT * FROM vin_dict WHERE id = #{id} FOR UPDATE;
@@ -200,11 +200,11 @@ SELECT tenant_id, deleted FROM vin_dict_item
  WHERE dict_id = #{dictId} AND code = #{code};
 ```
 
-Update/delete/restore statements include `version = #{expectedVersion}` and increment `version`; zero affected rows maps to `OPTIMISTIC_LOCK_CONFLICT`. Page queries clamp neither page nor size—the application validates them and rejects invalid input.
+更新/删除/恢复语句包含 `version = #{expectedVersion}` 并递增 `version`；影响行数为零时映射为 `OPTIMISTIC_LOCK_CONFLICT`。分页查询不应对页码或页大小进行截断——由应用层校验并拒绝无效输入。
 
-- [ ] **Step 5: Implement SpringTxRunner against the selected transaction manager**
+- [ ] **步骤 5：针对选定的事务管理器实现 SpringTxRunner**
 
-Wrap a `TransactionTemplate`:
+封装一个 `TransactionTemplate`：
 
 ```java
 public <T> T required(Supplier<T> action) {
@@ -212,17 +212,17 @@ public <T> T required(Supplier<T> action) {
 }
 ```
 
-Do not annotate application services with Spring annotations.
+不得为应用服务添加 Spring 注解。
 
-- [ ] **Step 6: Run MySQL integration and concurrency tests**
+- [ ] **步骤 6：运行 MySQL 集成和并发测试**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-infra-mybatis -am verify
 ```
 
-Expected: CRUD, restore, uniqueness, pagination, optimistic lock and concurrent collision tests pass.
+预期结果：CRUD、恢复、唯一性、分页、乐观锁和并发冲突测试通过。
 
-- [ ] **Step 7: Commit the write adapter**
+- [ ] **步骤 7：提交写入适配器**
 
 ```bash
 git add vincent-dict/vincent-dict-infra-mybatis
@@ -231,9 +231,9 @@ git commit -m "feat(dict): add transactional admin persistence"
 
 ---
 
-### Task 3: Expose the versioned admin REST API with conditional security
+### Task 3：通过条件安全控制暴露带版本的管理端 REST API
 
-**Files:**
+**文件：**
 - Create: `vincent-dict/vincent-dict-web/src/main/java/com/vincent/tools/dict/web/DictAdminController.java`
 - Create: `vincent-dict/vincent-dict-web/src/main/java/com/vincent/tools/dict/web/DictItemAdminController.java`
 - Create: `vincent-dict/vincent-dict-web/src/main/java/com/vincent/tools/dict/web/TenantAdminController.java`
@@ -248,11 +248,11 @@ git commit -m "feat(dict): add transactional admin persistence"
 - Test: `vincent-dict/vincent-dict-web/src/test/java/com/vincent/tools/dict/web/DictAdminControllerTest.java`
 - Test: `vincent-dict/vincent-dict-web/src/test/java/com/vincent/tools/dict/web/DictAdminWebAutoConfigurationTest.java`
 
-**Interfaces:**
-- Consumes: `DictAdminService`, `TenantDirectory`, `PermissionProvider`, and admin properties.
-- Produces: REST contract under `/vincent/dict/admin/api/v1` and protected SPA entry route.
+**接口：**
+- 消费：`DictAdminService`、`TenantDirectory`、`PermissionProvider` 和管理端属性。
+- 产出：`/vincent/dict/admin/api/v1` 下的 REST 契约和受保护的 SPA 入口路由。
 
-- [ ] **Step 1: Write failing MockMvc authorization and validation tests**
+- [ ] **步骤 1：编写失败的 MockMvc 授权和校验测试**
 
 ```java
 mockMvc.perform(post("/vincent/dict/admin/api/v1/dicts/10/items/tenant")
@@ -264,19 +264,19 @@ verify(permissionProvider).hasPermission(
     DictAdminPermission.ITEM_CREATE, Optional.of("tenant-b"));
 ```
 
-Add invalid lowercase code, size > 100, missing operator, missing tenant directory, deleted-edit, and stable error-code assertions.
+增加对无效小写编码、大小大于 100、缺少操作人、缺少租户目录、编辑已删除记录和稳定错误码的断言。
 
-- [ ] **Step 2: Run Web tests and verify failure**
+- [ ] **步骤 2：运行 Web 测试并验证失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-web -am test
 ```
 
-Expected: compilation fails because controllers and auto-configuration are absent.
+预期结果：因控制器和自动配置不存在而编译失败。
 
-- [ ] **Step 3: Implement exact REST resources**
+- [ ] **步骤 3：实现精确的 REST 资源**
 
-Use these routes:
+使用以下路由：
 
 ```text
 GET    /dicts
@@ -297,25 +297,25 @@ POST   /items/{itemId}/restore
 GET    /tenants
 ```
 
-Every endpoint returns `ApiResponse<T>` with `success`, `code`, `message`, and `data`; map stable component errors to HTTP 400/403/404/409/500 without host response types. `/capabilities` evaluates stable permissions for either default scope or the optional target tenant and returns `tenantDirectoryAvailable`, allowing the UI to hide unauthorized actions and the tenant tab without treating authorization as a front-end security boundary. Tenant ID belongs in the JSON request body rather than a URL path because valid host tenant identifiers are opaque strings.
+每个端点返回包含 `success`、`code`、`message` 和 `data` 的 `ApiResponse<T>`；将稳定的组件错误映射为 HTTP 400/403/404/409/500，不使用宿主响应类型。`/capabilities` 针对默认范围或可选目标租户评估稳定权限，并返回 `tenantDirectoryAvailable`，使 UI 能隐藏未获授权的操作和租户标签页，同时不将授权视为前端安全边界。租户 ID 应位于 JSON 请求体中而非 URL 路径，因为有效的宿主租户标识符是不透明字符串。
 
-- [ ] **Step 4: Implement conditional Web auto-configuration**
+- [ ] **步骤 4：实现条件化 Web 自动配置**
 
-Use `@ConditionalOnWebApplication(type = SERVLET)`, `@ConditionalOnClass(name = "org.springframework.web.servlet.DispatcherServlet")`, and `@ConditionalOnProperty(prefix="vincent.dict.admin", name="enabled", havingValue="true")`. Fail context creation if operator/permission providers are absent. Do not require `TenantDirectory` for startup; expose tenant endpoint as `CONFIGURATION_INVALID` and hide tenant UI when absent.
+使用 `@ConditionalOnWebApplication(type = SERVLET)`、`@ConditionalOnClass(name = "org.springframework.web.servlet.DispatcherServlet")` 和 `@ConditionalOnProperty(prefix="vincent.dict.admin", name="enabled", havingValue="true")`。若缺少操作人/权限提供者，则使上下文创建失败。启动时不要求 `TenantDirectory`；缺少时将租户端点暴露为 `CONFIGURATION_INVALID`，并隐藏租户 UI。
 
-- [ ] **Step 5: Protect the SPA entry route**
+- [ ] **步骤 5：保护 SPA 入口路由**
 
-`GET /dict-admin` and `/dict-admin/` must require `DICT_VIEW`; `DictAdminResourceHandler` maps the configured base path to `classpath:/META-INF/resources/dict-admin/` and serves the SPA fallback with relative asset URLs. Hashed CSS/JS assets may be publicly cacheable because they contain no data or secrets. All data endpoints remain independently authorized.
+`GET /dict-admin` 和 `/dict-admin/` 必须要求 `DICT_VIEW`；`DictAdminResourceHandler` 将配置的基路径映射到 `classpath:/META-INF/resources/dict-admin/`，并以相对资源 URL 提供 SPA 回退页面。带哈希的 CSS/JS 资源不含数据或机密，因此可以公开缓存。所有数据端点仍须独立授权。
 
-- [ ] **Step 6: Run Web and non-Web context tests**
+- [ ] **步骤 6：运行 Web 和非 Web 上下文测试**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-web -am test
 ```
 
-Expected: authorized REST tests pass; Web auto-config is absent in `WebApplicationType.NONE`.
+预期结果：已授权的 REST 测试通过；在 `WebApplicationType.NONE` 中不存在 Web 自动配置。
 
-- [ ] **Step 7: Commit the admin API**
+- [ ] **步骤 7：提交管理端 API**
 
 ```bash
 git add vincent-dict/vincent-dict-web
@@ -324,9 +324,9 @@ git commit -m "feat(dict): add conditional admin api"
 
 ---
 
-### Task 4: Build the Vue module and typed API client
+### Task 4：构建 Vue 模块和类型化 API 客户端
 
-**Files:**
+**文件：**
 - Modify: `vincent-dict/vincent-dict-admin-ui/pom.xml`
 - Create: `vincent-dict/vincent-dict-admin-ui/package.json`
 - Create: `vincent-dict/vincent-dict-admin-ui/package-lock.json`
@@ -340,11 +340,11 @@ git commit -m "feat(dict): add conditional admin api"
 - Create: `vincent-dict/vincent-dict-admin-ui/src/api/types.ts`
 - Test: `vincent-dict/vincent-dict-admin-ui/src/api/dict.spec.ts`
 
-**Interfaces:**
-- Consumes: Task 3 REST routes and `ApiResponse<T>`.
-- Produces: reproducible Node build and typed client functions for every management endpoint.
+**接口：**
+- 消费：任务 3 的 REST 路由和 `ApiResponse<T>`。
+- 产出：可复现的 Node 构建，以及覆盖每个管理端点的类型化客户端函数。
 
-- [ ] **Step 1: Create package scripts and locked dependencies**
+- [ ] **步骤 1：创建包脚本和锁定的依赖**
 
 ```json
 {
@@ -371,13 +371,13 @@ git commit -m "feat(dict): add conditional admin api"
 }
 ```
 
-Generate and commit `package-lock.json` with `npm install --package-lock-only`; subsequent builds use `npm ci`.
+通过 `npm install --package-lock-only` 生成并提交 `package-lock.json`；后续构建使用 `npm ci`。
 
-- [ ] **Step 2: Write failing typed-client tests**
+- [ ] **步骤 2：编写失败的类型化客户端测试**
 
-Mock Axios and assert `createTenantItem(10, "tenant-b", payload)` posts `{tenantId:"tenant-b", ...payload}` to `/dicts/10/items/tenant`, while restore calls the exact `/restore` route. Assert API errors retain component `code` for UI messages.
+模拟 Axios 并断言 `createTenantItem(10, "tenant-b", payload)` 向 `/dicts/10/items/tenant` 提交 `{tenantId:"tenant-b", ...payload}`，而恢复操作调用精确的 `/restore` 路由。断言 API 错误保留组件 `code` 以供 UI 展示消息。
 
-- [ ] **Step 3: Run UI tests and verify failure**
+- [ ] **步骤 3：运行 UI 测试并验证失败**
 
 ```bash
 cd vincent-dict/vincent-dict-admin-ui
@@ -385,17 +385,17 @@ npm ci
 npm run test
 ```
 
-Expected: tests fail because client functions are absent.
+预期结果：因客户端函数不存在而测试失败。
 
-- [ ] **Step 4: Implement the typed client and router shell**
+- [ ] **步骤 4：实现类型化客户端和路由外壳**
 
-Set Axios base URL from injected runtime value `window.__VIN_DICT_CONFIG__.apiPath`, falling back to `/vincent/dict/admin/api/v1`. Use routes `/`, `/dicts/:dictId`, and a catch-all redirect. Do not add a global state library.
+从注入的运行时值 `window.__VIN_DICT_CONFIG__.apiPath` 设置 Axios 基础 URL，回退值为 `/vincent/dict/admin/api/v1`。使用 `/`、`/dicts/:dictId` 和兜底重定向路由。不得增加全局状态库。
 
-- [ ] **Step 5: Integrate UI build into Maven with Java-8-compatible plugin**
+- [ ] **步骤 5：使用兼容 Java 8 的插件将 UI 构建集成到 Maven**
 
-Use `frontend-maven-plugin 1.12.1`, Node `v22.12.0`, `npm ci`, `npm test`, and `npm run build`. Configure Vite output into `target/classes/META-INF/resources/dict-admin` with relative asset URLs. Provide `-DskipFrontend` only for backend-focused local iterations; release verification must not skip it.
+使用 `frontend-maven-plugin 1.12.1`、Node `v22.12.0`、`npm ci`、`npm test` 和 `npm run build`。将 Vite 输出配置到带相对资源 URL 的 `target/classes/META-INF/resources/dict-admin`。仅为专注后端的本地迭代提供 `-DskipFrontend`；发布验证不得跳过它。
 
-- [ ] **Step 6: Run UI and Maven module checks**
+- [ ] **步骤 6：运行 UI 和 Maven 模块检查**
 
 ```bash
 cd vincent-dict/vincent-dict-admin-ui
@@ -405,9 +405,9 @@ cd ../..
 mvn -q -pl vincent-dict/vincent-dict-admin-ui package
 ```
 
-Expected: tests/typecheck/build pass; jar contains `META-INF/resources/dict-admin/index.html` and hashed assets.
+预期结果：测试/类型检查/构建通过；jar 包含 `META-INF/resources/dict-admin/index.html` 和带哈希的资源。
 
-- [ ] **Step 7: Commit the UI foundation**
+- [ ] **步骤 7：提交 UI 基础设施**
 
 ```bash
 git add vincent-dict/vincent-dict-admin-ui
@@ -416,9 +416,9 @@ git commit -m "feat(dict): add admin ui foundation"
 
 ---
 
-### Task 5: Implement dictionary, default-item, tenant-item, and restore screens
+### Task 5：实现字典、默认条目、租户条目和恢复页面
 
-**Files:**
+**文件：**
 - Create: `vincent-dict/vincent-dict-admin-ui/src/views/DictListView.vue`
 - Create: `vincent-dict/vincent-dict-admin-ui/src/views/DictDetailView.vue`
 - Create: `vincent-dict/vincent-dict-admin-ui/src/components/DictForm.vue`
@@ -430,36 +430,36 @@ git commit -m "feat(dict): add admin ui foundation"
 - Create: `vincent-dict/vincent-dict-admin-ui/src/views/DictDetailView.spec.ts`
 - Create: `vincent-dict/vincent-dict-admin-ui/src/components/TenantPicker.spec.ts`
 
-**Interfaces:**
-- Consumes: typed client from Task 4 and server permission/tenant capability data.
-- Produces: complete first-version management workflows.
+**接口：**
+- 消费：任务 4 的类型化客户端以及服务端权限/租户能力数据。
+- 产出：完整的第一版管理工作流。
 
-- [ ] **Step 1: Write failing list and restore component tests**
+- [ ] **步骤 1：编写失败的列表和恢复组件测试**
 
-Mount list/detail views with mocked API. Assert status/deleted filters are sent, lowercase codes show local validation, deleted rows show only “View” and “Restore”, and `DICT_NOT_EMPTY` displays the server message without removing the row.
+使用模拟 API 挂载列表/详情视图。断言会发送状态/已删除筛选条件，小写编码显示本地校验，已删除行仅显示“查看”和“恢复”，并且 `DICT_NOT_EMPTY` 会显示服务端消息而不移除该行。
 
-- [ ] **Step 2: Write failing tenant-picker tests**
+- [ ] **步骤 2：编写失败的租户选择器测试**
 
-Assert search is debounced by 300 ms, page size never exceeds 100, a missing tenant capability hides the tenant tab, and a selected tenant ID is revalidated by the server during create.
+断言搜索采用 300 ms 防抖，页大小绝不超过 100，缺少租户能力时隐藏租户标签页，并且在创建时由服务端重新校验选定的租户 ID。
 
-- [ ] **Step 3: Run tests and verify failure**
+- [ ] **步骤 3：运行测试并验证失败**
 
 ```bash
 cd vincent-dict/vincent-dict-admin-ui
 npm run test
 ```
 
-Expected: component tests fail because views/components are missing.
+预期结果：因视图/组件缺失而组件测试失败。
 
-- [ ] **Step 4: Implement list and dict detail workflows**
+- [ ] **步骤 4：实现列表和字典详情工作流**
 
-Use Element Plus table/form/dialog/tabs. Dict list includes code/name/status/deleted filters and create/edit/status/delete/restore actions. Detail shows basic info, default items, and tenant items. All lists are server-paginated with default 20/max 100.
+使用 Element Plus 表格/表单/对话框/标签页。字典列表包含编码/名称/状态/已删除筛选，以及创建/编辑/状态变更/删除/恢复操作。详情展示基本信息、默认条目和租户条目。所有列表均使用服务端分页，默认 20、最大 100。
 
-- [ ] **Step 5: Implement item forms and tenant selection**
+- [ ] **步骤 5：实现条目表单和租户选择**
 
-Create code is editable only for new rows; update forms omit code, dict and tenant. Deleted items disable all controls except restore. Show source (`DEFAULT`/`TENANT`) and tenant display name without exposing internal dict/item IDs outside management routes.
+创建时编码仅对新行可编辑；更新表单不包含编码、字典和租户。已删除条目除恢复外禁用所有控件。展示来源（`DEFAULT`/`TENANT`）和租户显示名称，且不得在管理路由之外暴露内部字典/条目 ID。
 
-- [ ] **Step 6: Run UI tests, typecheck, and production build**
+- [ ] **步骤 6：运行 UI 测试、类型检查和生产构建**
 
 ```bash
 cd vincent-dict/vincent-dict-admin-ui
@@ -468,9 +468,9 @@ npm run typecheck
 npm run build
 ```
 
-Expected: all pass with no console warnings from Vue tests.
+预期结果：全部通过，Vue 测试不产生控制台警告。
 
-- [ ] **Step 7: Commit management screens**
+- [ ] **步骤 7：提交管理页面**
 
 ```bash
 git add vincent-dict/vincent-dict-admin-ui
@@ -479,9 +479,9 @@ git commit -m "feat(dict): implement admin management screens"
 
 ---
 
-### Task 6: Package the UI in the Starter and verify Web/non-Web consumers
+### Task 6：将 UI 打包进 Starter，并验证 Web/非 Web 使用方
 
-**Files:**
+**文件：**
 - Modify: `vincent-dict/vincent-dict-web/pom.xml`
 - Modify: `vincent-dict/vincent-dict-boot2-starter/pom.xml`
 - Modify: `vincent-dict/vincent-dict-boot2-starter/src/main/resources/META-INF/spring.factories`
@@ -490,29 +490,29 @@ git commit -m "feat(dict): implement admin management screens"
 - Create: `vincent-dict/vincent-dict-example-boot2/src/test/java/com/vincent/tools/dict/example/NonWebClasspathIT.java`
 - Modify: `vincent-dict/README.md`
 
-**Interfaces:**
-- Consumes: UI resource jar, Web auto-config, core Starter and example host.
-- Produces: one Starter that serves admin only when eligible and remains safe in non-Web hosts.
+**接口：**
+- 消费：UI 资源 jar、Web 自动配置、核心 Starter 和示例宿主。
+- 产出：一个仅在满足条件时提供管理端服务、且在非 Web 宿主中仍保持安全的 Starter。
 
-- [ ] **Step 1: Write failing packaged-resource and route tests**
+- [ ] **步骤 1：编写失败的打包资源和路由测试**
 
-Assert the Starter jar contains `/META-INF/resources/dict-admin/index.html`; an authorized Web request to `/dict-admin` returns the SPA; an unauthorized request returns 403; a non-Web application context has no controller, dispatcher servlet, or embedded server factory.
+断言 Starter jar 包含 `/META-INF/resources/dict-admin/index.html`；已授权的 Web 请求访问 `/dict-admin` 时返回 SPA；未授权请求返回 403；非 Web 应用上下文不包含控制器、dispatcher servlet 或嵌入式服务器工厂。
 
-- [ ] **Step 2: Run packaging tests and verify failure**
+- [ ] **步骤 2：运行打包测试并验证失败**
 
 ```bash
 mvn -q -pl vincent-dict/vincent-dict-example-boot2 -am -Dtest=DictAdminPageIT,NonWebClasspathIT test
 ```
 
-Expected: FAIL until module dependencies and adapters are wired.
+预期结果：在模块依赖和适配器接入前失败。
 
-- [ ] **Step 3: Wire UI/Web into the same core Starter**
+- [ ] **步骤 3：将 UI/Web 接入同一核心 Starter**
 
-Add `vincent-dict-web` and `vincent-dict-admin-ui` dependencies. Keep Spring MVC dependencies optional. Use `maven-dependency-plugin` during `process-resources` to unpack only `META-INF/resources/dict-admin/**` from the UI jar into the Starter output, so the published Starter jar contains the page assets. Add admin auto-config to `spring.factories`; conditions must be evaluated before any MVC-only type is instantiated.
+添加 `vincent-dict-web` 和 `vincent-dict-admin-ui` 依赖。保持 Spring MVC 依赖为可选。使用 `maven-dependency-plugin` 在 `process-resources` 阶段仅从 UI jar 解压 `META-INF/resources/dict-admin/**` 到 Starter 输出，使发布的 Starter jar 包含页面资源。将管理端自动配置添加到 `spring.factories`；必须在实例化任何仅 MVC 类型前评估条件。
 
-- [ ] **Step 4: Implement example adapters**
+- [ ] **步骤 4：实现示例适配器**
 
-Provide in-memory example implementations:
+提供内存中的示例实现：
 
 ```java
 OperatorProvider operatorProvider() { return () -> "example-admin"; }
@@ -520,33 +520,33 @@ PermissionProvider permissionProvider() { return (permission, tenant) -> true; }
 TenantDirectory tenantDirectory() { return new ExampleTenantDirectory(); }
 ```
 
-Use these only in the example module.
+仅在示例模块中使用这些实现。
 
-- [ ] **Step 5: Document Web activation and security ownership**
+- [ ] **步骤 5：编写 Web 启用方式和安全责任归属文档**
 
-Document admin enablement, SPA/API paths, mandatory operator/permission adapters, target tenant authorization, optional tenant directory behavior, host authentication/CSRF responsibility, and non-Web manual maintenance warning.
+记录管理端启用方式、SPA/API 路径、必需的操作人/权限适配器、目标租户授权、可选租户目录行为、宿主认证/CSRF 责任，以及非 Web 手动维护警告。
 
-- [ ] **Step 6: Run complete admin acceptance verification**
+- [ ] **步骤 6：运行完整的管理端验收验证**
 
 ```bash
 mvn -q clean verify
 unzip -l vincent-dict/vincent-dict-boot2-starter/target/vincent-dict-boot2-starter-1.0.0-SNAPSHOT.jar META-INF/resources/dict-admin/index.html
 ```
 
-Expected: backend/UI/integration tests pass; index exists; non-Web context remains non-Web.
+预期结果：后端/UI/集成测试通过；索引文件存在；非 Web 上下文保持非 Web。
 
-- [ ] **Step 7: Commit admin packaging and docs**
+- [ ] **步骤 7：提交管理端打包和文档**
 
 ```bash
 git add vincent-dict
 git commit -m "feat(dict): embed conditional admin console"
 ```
 
-## Admin Plan Exit Criteria
+## 管理端计划退出标准
 
-- All writes enforce scoped permissions, operator metadata, tenant validation and DDD invariants.
-- Concurrent default/tenant code creation cannot violate collision rules.
-- Deletion is non-cascading; deleted records are viewable and restorable.
-- Web API and Vue UI implement every approved management action with bounded pagination.
-- The same core Starter serves the UI in eligible Web hosts and remains non-Web otherwise.
-- No audit table, audit history, or host-specific response wrapper is introduced.
+- 所有写入均强制执行范围权限、操作人元数据、租户校验和 DDD 不变量。
+- 默认/租户编码的并发创建不得违反冲突规则。
+- 删除不级联；已删除记录可查看且可恢复。
+- Web API 和 Vue UI 通过有界分页实现每项已批准的管理操作。
+- 同一核心 Starter 在满足条件的 Web 宿主中提供 UI，在其他情况下保持非 Web。
+- 不引入审计表、审计历史或宿主专属响应包装器。
