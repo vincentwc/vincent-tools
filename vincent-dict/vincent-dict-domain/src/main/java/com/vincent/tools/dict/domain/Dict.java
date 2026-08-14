@@ -10,9 +10,9 @@ public final class Dict {
     private final Long id;
     private final DictCode code;
     private String name;
-    private final String description;
+    private String description;
     private DictStatus status;
-    private final int sortNo;
+    private int sortNo;
     private final int version;
     private boolean deleted;
     private final String createdBy;
@@ -49,34 +49,58 @@ public final class Dict {
     }
 
     public void rename(String name, String operator, Instant now) {
-        this.name = requireName(name);
-        updateMaintenance(operator, now);
+        update(name, description, sortNo, operator, now);
+    }
+
+    public void update(String name, String description, int sortNo, String operator, Instant now) {
+        requireNotDeleted();
+        String validatedName = requireName(name);
+        String validatedDescription = requireDescription(description);
+        String validatedOperator = requireOperator(operator);
+        Instant validatedNow = requireTimestamp(now);
+
+        this.name = validatedName;
+        this.description = validatedDescription;
+        this.sortNo = sortNo;
+        updateMaintenance(validatedOperator, validatedNow);
     }
 
     public void enable(String operator, Instant now) {
+        requireNotDeleted();
+        String validatedOperator = requireOperator(operator);
+        Instant validatedNow = requireTimestamp(now);
         status = DictStatus.ENABLED;
-        updateMaintenance(operator, now);
+        updateMaintenance(validatedOperator, validatedNow);
     }
 
     public void disable(String operator, Instant now) {
+        requireNotDeleted();
+        String validatedOperator = requireOperator(operator);
+        Instant validatedNow = requireTimestamp(now);
         status = DictStatus.DISABLED;
-        updateMaintenance(operator, now);
+        updateMaintenance(validatedOperator, validatedNow);
     }
 
     public void delete(int unDeletedItemCount, String operator, Instant now) {
+        requireNotDeleted();
+        if (unDeletedItemCount < 0) {
+            throw invalidArgument("undeleted item count cannot be negative");
+        }
         if (unDeletedItemCount > 0) {
             throw new DictException(DictErrorCode.DICT_NOT_EMPTY, "dictionary contains undeleted items");
         }
+        String validatedOperator = requireOperator(operator);
+        Instant validatedNow = requireTimestamp(now);
         deleted = true;
-        updateMaintenance(operator, now);
+        updateMaintenance(validatedOperator, validatedNow);
     }
 
     public void restore(String operator, Instant now) {
-        if (!deleted) {
-            throw new DictException(DictErrorCode.INVALID_ARGUMENT, "dictionary is not deleted");
-        }
+        requireDeleted();
+        String validatedOperator = requireOperator(operator);
+        Instant validatedNow = requireTimestamp(now);
         deleted = false;
-        updateMaintenance(operator, now);
+        updateMaintenance(validatedOperator, validatedNow);
     }
 
     public Long id() { return id; }
@@ -94,8 +118,20 @@ public final class Dict {
     public boolean isEffective() { return !deleted && status == DictStatus.ENABLED; }
 
     private void updateMaintenance(String operator, Instant now) {
-        updatedBy = requireOperator(operator);
-        updatedAt = requireTimestamp(now);
+        updatedBy = operator;
+        updatedAt = now;
+    }
+
+    private void requireNotDeleted() {
+        if (deleted) {
+            throw new DictException(DictErrorCode.INVALID_ARGUMENT, "dictionary is deleted");
+        }
+    }
+
+    private void requireDeleted() {
+        if (!deleted) {
+            throw new DictException(DictErrorCode.INVALID_ARGUMENT, "dictionary is not deleted");
+        }
     }
 
     private static DictCode requireCode(DictCode code) {

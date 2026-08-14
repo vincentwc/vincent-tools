@@ -187,6 +187,262 @@ class DictTest {
                 .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
     }
 
+    @Test
+    void deleted_dict_rejects_every_non_restore_mutation_without_changing_state() {
+        Dict dict = TestFixtures.activeDict();
+        dict.delete(0, TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(60));
+        DictState before = DictState.capture(dict);
+
+        assertInvalid(() -> dict.rename("Renamed", TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatDictStateIsUnchanged(dict, before);
+        assertInvalid(() -> dict.enable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatDictStateIsUnchanged(dict, before);
+        assertInvalid(() -> dict.disable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatDictStateIsUnchanged(dict, before);
+        assertInvalid(() -> dict.update("Renamed", "changed", 20, TestFixtures.OPERATOR,
+                TestFixtures.NOW.plusSeconds(120)));
+        assertThatDictStateIsUnchanged(dict, before);
+        assertInvalid(() -> dict.delete(0, TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatDictStateIsUnchanged(dict, before);
+    }
+
+    @Test
+    void deleted_item_rejects_every_non_restore_mutation_without_changing_state() {
+        DictItem item = TestFixtures.activeTenantItem();
+        item.delete(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(60));
+        DictItemState before = DictItemState.capture(item);
+
+        assertInvalid(() -> item.rename("Renamed", TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatItemStateIsUnchanged(item, before);
+        assertInvalid(() -> item.enable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatItemStateIsUnchanged(item, before);
+        assertInvalid(() -> item.disable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatItemStateIsUnchanged(item, before);
+        assertInvalid(() -> item.update("Renamed", "changed", 20, TestFixtures.OPERATOR,
+                TestFixtures.NOW.plusSeconds(120)));
+        assertThatItemStateIsUnchanged(item, before);
+        assertInvalid(() -> item.delete(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(120)));
+        assertThatItemStateIsUnchanged(item, before);
+    }
+
+    @Test
+    void dict_invalid_operator_does_not_change_business_or_maintenance_state() {
+        Dict dict = TestFixtures.activeDict();
+        dict.disable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(60));
+        DictState before = DictState.capture(dict);
+
+        assertInvalid(() -> dict.enable(" operator", TestFixtures.NOW.plusSeconds(120)));
+
+        assertThatDictStateIsUnchanged(dict, before);
+    }
+
+    @Test
+    void dict_null_timestamp_does_not_change_business_or_maintenance_state() {
+        Dict dict = TestFixtures.activeDict();
+        DictState before = DictState.capture(dict);
+
+        assertInvalid(() -> dict.disable(TestFixtures.OPERATOR, null));
+
+        assertThatDictStateIsUnchanged(dict, before);
+    }
+
+    @Test
+    void item_invalid_operator_does_not_change_business_or_maintenance_state() {
+        DictItem item = TestFixtures.activeTenantItem();
+        item.disable(TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(60));
+        DictItemState before = DictItemState.capture(item);
+
+        assertInvalid(() -> item.enable(" operator", TestFixtures.NOW.plusSeconds(120)));
+
+        assertThatItemStateIsUnchanged(item, before);
+    }
+
+    @Test
+    void item_null_timestamp_does_not_change_business_or_maintenance_state() {
+        DictItem item = TestFixtures.activeTenantItem();
+        DictItemState before = DictItemState.capture(item);
+
+        assertInvalid(() -> item.disable(TestFixtures.OPERATOR, null));
+
+        assertThatItemStateIsUnchanged(item, before);
+    }
+
+    @Test
+    void dict_rejects_negative_undeleted_item_count_without_changing_state() {
+        Dict dict = TestFixtures.activeDict();
+        DictState before = DictState.capture(dict);
+
+        assertInvalid(() -> dict.delete(-1, TestFixtures.OPERATOR, TestFixtures.NOW.plusSeconds(60)));
+
+        assertThatDictStateIsUnchanged(dict, before);
+    }
+
+    @Test
+    void dict_update_changes_all_editable_presentation_fields_together() {
+        Dict dict = TestFixtures.activeDict();
+
+        dict.update("Order lifecycle", "Lifecycle labels", 20, "editor", TestFixtures.NOW.plusSeconds(60));
+
+        assertThat(dict.name()).isEqualTo("Order lifecycle");
+        assertThat(dict.description()).isEqualTo("Lifecycle labels");
+        assertThat(dict.sortNo()).isEqualTo(20);
+        assertThat(dict.updatedBy()).isEqualTo("editor");
+        assertThat(dict.updatedAt()).isEqualTo(TestFixtures.NOW.plusSeconds(60));
+    }
+
+    @Test
+    void dict_update_with_invalid_description_leaves_all_state_unchanged() {
+        Dict dict = TestFixtures.activeDict();
+        DictState before = DictState.capture(dict);
+
+        assertInvalid(() -> dict.update("Order lifecycle", repeat('d', 501), 20, "editor",
+                TestFixtures.NOW.plusSeconds(60)));
+
+        assertThatDictStateIsUnchanged(dict, before);
+    }
+
+    @Test
+    void item_update_changes_all_editable_presentation_fields_together() {
+        DictItem item = TestFixtures.activeTenantItem();
+
+        item.update("Enabled", "Enabled state", 20, "editor", TestFixtures.NOW.plusSeconds(60));
+
+        assertThat(item.name()).isEqualTo("Enabled");
+        assertThat(item.description()).isEqualTo("Enabled state");
+        assertThat(item.sortNo()).isEqualTo(20);
+        assertThat(item.updatedBy()).isEqualTo("editor");
+        assertThat(item.updatedAt()).isEqualTo(TestFixtures.NOW.plusSeconds(60));
+    }
+
+    @Test
+    void item_update_with_invalid_operator_leaves_all_state_unchanged() {
+        DictItem item = TestFixtures.activeTenantItem();
+        DictItemState before = DictItemState.capture(item);
+
+        assertInvalid(() -> item.update("Enabled", "Enabled state", 20, " editor",
+                TestFixtures.NOW.plusSeconds(60)));
+
+        assertThatItemStateIsUnchanged(item, before);
+    }
+
+    private static void assertInvalid(ThrowingAction action) {
+        assertThatThrownBy(action::run)
+                .isInstanceOf(DictException.class)
+                .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+    }
+
+    private static void assertThatDictStateIsUnchanged(Dict dict, DictState before) {
+        assertThat(dict.id()).isEqualTo(before.id);
+        assertThat(dict.code()).isEqualTo(before.code);
+        assertThat(dict.name()).isEqualTo(before.name);
+        assertThat(dict.description()).isEqualTo(before.description);
+        assertThat(dict.status()).isEqualTo(before.status);
+        assertThat(dict.sortNo()).isEqualTo(before.sortNo);
+        assertThat(dict.version()).isEqualTo(before.version);
+        assertThat(dict.isDeleted()).isEqualTo(before.deleted);
+        assertThat(dict.createdBy()).isEqualTo(before.createdBy);
+        assertThat(dict.createdAt()).isEqualTo(before.createdAt);
+        assertThat(dict.updatedBy()).isEqualTo(before.updatedBy);
+        assertThat(dict.updatedAt()).isEqualTo(before.updatedAt);
+    }
+
+    private static void assertThatItemStateIsUnchanged(DictItem item, DictItemState before) {
+        assertThat(item.id()).isEqualTo(before.id);
+        assertThat(item.dictId()).isEqualTo(before.dictId);
+        assertThat(item.code()).isEqualTo(before.code);
+        assertThat(item.name()).isEqualTo(before.name);
+        assertThat(item.tenantId()).isEqualTo(before.tenantId);
+        assertThat(item.source()).isEqualTo(before.source);
+        assertThat(item.description()).isEqualTo(before.description);
+        assertThat(item.status()).isEqualTo(before.status);
+        assertThat(item.sortNo()).isEqualTo(before.sortNo);
+        assertThat(item.version()).isEqualTo(before.version);
+        assertThat(item.isDeleted()).isEqualTo(before.deleted);
+        assertThat(item.createdBy()).isEqualTo(before.createdBy);
+        assertThat(item.createdAt()).isEqualTo(before.createdAt);
+        assertThat(item.updatedBy()).isEqualTo(before.updatedBy);
+        assertThat(item.updatedAt()).isEqualTo(before.updatedAt);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingAction {
+        void run();
+    }
+
+    private static final class DictState {
+        private final Long id;
+        private final DictCode code;
+        private final String name;
+        private final String description;
+        private final DictStatus status;
+        private final int sortNo;
+        private final int version;
+        private final boolean deleted;
+        private final String createdBy;
+        private final Instant createdAt;
+        private final String updatedBy;
+        private final Instant updatedAt;
+
+        private DictState(Dict dict) {
+            id = dict.id();
+            code = dict.code();
+            name = dict.name();
+            description = dict.description();
+            status = dict.status();
+            sortNo = dict.sortNo();
+            version = dict.version();
+            deleted = dict.isDeleted();
+            createdBy = dict.createdBy();
+            createdAt = dict.createdAt();
+            updatedBy = dict.updatedBy();
+            updatedAt = dict.updatedAt();
+        }
+
+        private static DictState capture(Dict dict) {
+            return new DictState(dict);
+        }
+    }
+
+    private static final class DictItemState {
+        private final Long id;
+        private final long dictId;
+        private final ItemCode code;
+        private final String name;
+        private final TenantId tenantId;
+        private final DictItemSource source;
+        private final String description;
+        private final ItemStatus status;
+        private final int sortNo;
+        private final int version;
+        private final boolean deleted;
+        private final String createdBy;
+        private final Instant createdAt;
+        private final String updatedBy;
+        private final Instant updatedAt;
+
+        private DictItemState(DictItem item) {
+            id = item.id();
+            dictId = item.dictId();
+            code = item.code();
+            name = item.name();
+            tenantId = item.tenantId();
+            source = item.source();
+            description = item.description();
+            status = item.status();
+            sortNo = item.sortNo();
+            version = item.version();
+            deleted = item.isDeleted();
+            createdBy = item.createdBy();
+            createdAt = item.createdAt();
+            updatedBy = item.updatedBy();
+            updatedAt = item.updatedAt();
+        }
+
+        private static DictItemState capture(DictItem item) {
+            return new DictItemState(item);
+        }
+    }
+
     private static String repeat(char character, int count) {
         StringBuilder value = new StringBuilder(count);
         for (int index = 0; index < count; index++) {
