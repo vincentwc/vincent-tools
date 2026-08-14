@@ -11,4 +11,12 @@
     </parent>
 
     <artifactId>vincent-dict-admin-ui</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
