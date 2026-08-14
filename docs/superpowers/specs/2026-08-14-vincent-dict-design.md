@@ -59,7 +59,8 @@ vincent-tools
     ├── vincent-dict-web
     ├── vincent-dict-admin-ui
     ├── vincent-dict-boot2-starter
-    └── vincent-dict-cache-redis-boot2-starter
+    ├── vincent-dict-cache-redis-boot2-starter
+    └── vincent-dict-example-boot2
 ```
 
 根 POM 同时承担内部父工程与源码模块聚合职责，并与其他模块一起发布：
@@ -177,6 +178,8 @@ createdBy, createdAt, updatedBy, updatedAt
 - 名称最长 128 字符；
 - 描述最长 500 字符；
 - `tenantId` 最长 64 字符，`"0"` 是组件保留值。
+- `operatorId` 必须非空且最长 64 字符；
+- 创建和更新时间按 UTC 生成并持久化，展示时由宿主或浏览器转换时区。
 
 ### 5.4 多租户不变量
 
@@ -362,7 +365,8 @@ sql/mysql
 - 宿主只有一个 `DataSource` 时自动使用；
 - 多数据源且有唯一 `@Primary` 时默认使用主数据源；
 - 多数据源且没有唯一主数据源时启动失败；
-- 可用 `vincent.dict.data-source-bean-name` 显式选择；
+- 可用 `vincent.dict.data-source-bean-name`、`sql-session-factory-bean-name` 和 `transaction-manager-bean-name` 显式选择；
+- 多套数据库基础设施并存且需要显式选择时，三个 Bean 名称必须一起配置；
 - 配置的 Bean 不存在或类型错误时启动失败；
 - 事务管理器和 `SqlSessionFactory` 必须与选中 DataSource 匹配；
 - 组件不创建连接池，不读取独立数据库账号密码；
@@ -385,8 +389,10 @@ vincent:
 - Redis Starter 复用宿主 `StringRedisTemplate`，不维护独立连接；
 - 启用缓存但缺少 `StringRedisTemplate` 时启动失败；
 - 字典或默认项变化时递增字典级缓存版本；
-- 某租户项变化时删除该租户的精确缓存键；
-- 缓存键包含字典编码、版本和租户；
+- 某租户项变化时递增该字典、该租户的租户级缓存版本；
+- 缓存键包含字典编码、字典版本、租户版本和租户；
+- 租户 ID 使用 URL-safe Base64 编码后进入 Key，不直接拼接原文；
+- 缓存未命中后的写入必须比较读取前后的字典/租户版本，仅在版本未变化时写入，防止查询与失效并发时回填旧数据；
 - Redis 正常时，事务提交后立即失效缓存；
 - Redis 查询故障时降级到数据库并限频告警；
 - Redis 失效失败不回滚已提交数据库事务；
@@ -396,8 +402,9 @@ vincent:
 建议键格式：
 
 ```text
-vin:dict:v1:{dictCode}:{version}:{tenantId}
-vin:dict:version:{dictCode}
+vin:dict:v1:{dictCode}:{dictVersion}:{tenantVersion}:{encodedTenantId}
+vin:dict:gv:{dictCode}
+vin:dict:tv:{dictCode}:{encodedTenantId}
 ```
 
 ## 13. 管理页面和 API
@@ -430,6 +437,8 @@ vincent:
   dict:
     enabled: true
     data-source-bean-name:
+    sql-session-factory-bean-name:
+    transaction-manager-bean-name:
     admin:
       enabled: false
       base-path: /dict-admin
