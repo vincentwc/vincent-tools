@@ -9,8 +9,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DictCodeTest {
     @Test
+    void rejects_null_code_with_stable_invalid_argument() {
+        assertThatThrownBy(() -> DictCode.of(null))
+                .isInstanceOf(DictException.class)
+                .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+    }
+
+    @Test
     void accepts_uppercase_business_code() {
         assertThat(DictCode.of("ORDER_STATUS").value()).isEqualTo("ORDER_STATUS");
+    }
+
+    @Test
+    void accepts_code_at_the_sixty_four_character_limit() {
+        String value = "A" + repeat('B', 63);
+
+        assertThat(DictCode.of(value).value()).isEqualTo(value);
     }
 
     @ParameterizedTest
@@ -37,5 +51,13 @@ class DictCodeTest {
 
         assertThat(first).isEqualTo(second).hasSameHashCodeAs(second);
         assertThat(first.toString()).isEqualTo("ORDER_STATUS");
+    }
+
+    private static String repeat(char character, int count) {
+        StringBuilder result = new StringBuilder(count);
+        for (int i = 0; i < count; i++) {
+            result.append(character);
+        }
+        return result.toString();
     }
 }

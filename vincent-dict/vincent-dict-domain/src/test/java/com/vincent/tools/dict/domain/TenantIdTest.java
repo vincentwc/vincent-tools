@@ -21,6 +21,22 @@ class TenantIdTest {
         assertThat(TenantId.of("tenant-a").isDefault()).isFalse();
     }
 
+    @Test
+    void accepts_tenant_id_at_the_sixty_four_character_limit() {
+        String value = repeat('t', 64);
+
+        assertThat(TenantId.of(value).value()).isEqualTo(value);
+    }
+
+    @Test
+    void rejects_tenant_id_longer_than_sixty_four_characters() {
+        String value = repeat('t', 65);
+
+        assertThatThrownBy(() -> TenantId.of(value))
+                .isInstanceOf(DictException.class)
+                .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+    }
+
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"", " ", " tenant-a", "tenant-a "})
@@ -38,5 +54,13 @@ class TenantIdTest {
         assertThat(first).isEqualTo(second).hasSameHashCodeAs(second);
         assertThat(first.toString()).isEqualTo("tenant-a");
         assertThat(TenantId.defaultItem().toString()).isEqualTo("0");
+    }
+
+    private static String repeat(char character, int count) {
+        StringBuilder result = new StringBuilder(count);
+        for (int i = 0; i < count; i++) {
+            result.append(character);
+        }
+        return result.toString();
     }
 }
