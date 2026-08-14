@@ -4,7 +4,8 @@
 
 - 工作树：`/Users/vincent/developEnv/code/vincent-tools/.worktrees/vincent-dict`
 - 分支：`feature/vincent-dict`
-- 当前 HEAD：`b089b8c feat(dict): add query application service`
+- Task 4 实现提交：`b089b8c feat(dict): add query application service`
+- 当前 HEAD 应为本交接文档的最新提交；请以 `git rev-parse --short HEAD` 的实际输出为准。
 - 主工作目录仍在 `main`；其中用户自己的 `.gitignore` 修改没有纳入功能分支。
 - 所有 Codex 子代理已停止，不会继续后台修改文件。
 
@@ -47,7 +48,7 @@ git status --short
 git log --oneline -10
 ```
 
-预期分支为 `feature/vincent-dict`，HEAD 为 `b089b8c`，工作树除本交接提交外应保持干净。
+预期分支为 `feature/vincent-dict`，工作树应保持干净；`git log` 顶部应为交接文档提交，其后可看到 Task 4 的 `b089b8c`。
 
 本机 Maven settings 默认启用了与 Java 8 冲突的 `jdk-17` profile。所有项目验证都需要显式禁用它：
 
