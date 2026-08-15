@@ -18,5 +18,7 @@
         <module>vincent-common-core</module>
         <module>vincent-common-web</module>
         <module>vincent-common-cache-redis</module>
+        <module>vincent-id-core</module>
+        <module>vincent-export-core</module>
     </modules>
 </project>
