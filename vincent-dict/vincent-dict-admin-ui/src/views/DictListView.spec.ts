@@ -152,6 +152,22 @@ describe('DictListView', () => {
     expect(actions.text()).not.toContain('停用');
   });
 
+  it('shows a form API error inside the open dict dialog', async () => {
+    api.createDict.mockRejectedValue(new ApiError('DICT_CODE_CONFLICT', 'dict code already exists'));
+    await mountList();
+    await wrapper.get('[data-testid="create-dict"]').trigger('click');
+    await nextTick();
+    await wrapper.get('[data-testid="dict-code"]').setValue('ORDER_TYPE');
+    await wrapper.get('[data-testid="dict-name"]').setValue('Order type');
+    await wrapper.get('[data-testid="dict-submit"]').trigger('click');
+    await flushPromises();
+    await nextTick();
+
+    const dialog = wrapper.get('.el-dialog');
+    expect(dialog.find('[data-testid="dict-submit"]').exists()).toBe(true);
+    expect(dialog.get('[data-testid="error-alert"]').text()).toContain('dict code already exists');
+  });
+
   it('DICT_NOT_EMPTY shows the server message and keeps the row', async () => {
     api.deleteDict.mockRejectedValue(new ApiError('DICT_NOT_EMPTY', 'dictionary contains undeleted items'));
     await mountList();

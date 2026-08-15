@@ -35,7 +35,14 @@
         </el-checkbox>
       </el-form-item>
       <el-form-item>
-        <el-button data-testid="search-items" type="primary" native-type="submit">查询</el-button>
+        <el-button
+          data-testid="search-items"
+          type="primary"
+          native-type="submit"
+          :disabled="tenantActionsLocked"
+        >
+          查询
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -90,7 +97,7 @@
           :capabilities="capabilities"
           :show-tenant="true"
           :tenant-name="selectedTenantName"
-          :read-only="!canMutateItems"
+          :read-only="!canMutateItems || tenantActionsLocked"
           @view="openView"
           @edit="openEdit"
           @status="toggleStatus"
@@ -104,6 +111,7 @@
           :page-size="query.size"
           :page-sizes="PAGE_SIZES"
           :total="total"
+          :disabled="tenantActionsLocked"
           @current-change="onPageChange"
           @size-change="onSizeChange"
         />
@@ -118,6 +126,7 @@
       :lock-scroll="false"
       @close="formVisible = false"
     >
+      <ErrorAlert :message="formError" @clear="formError = ''" />
       <ItemForm
         :mode="formMode"
         :model="editing ?? undefined"
@@ -176,6 +185,7 @@ import { hasPermission } from '../permissions';
 const route = useRoute();
 const router = useRouter();
 const error = ref('');
+const formError = ref('');
 const dict = ref<DictDetail | null>(null);
 const capabilities = ref<AdminCapabilities | null>(null);
 const items = ref<DictItemDetail[]>([]);
@@ -199,6 +209,9 @@ const query = reactive({
 
 const dictId = computed(() => Number(route.params.dictId));
 const canMutateItems = computed(() => dict.value !== null && !dict.value.deleted);
+const tenantActionsLocked = computed(
+  () => activeTab.value === 'tenant' && selectedTenantId.value.length === 0
+);
 const formTitle = computed(() => {
   if (formMode.value === 'create') {
     return '创建条目';
@@ -222,8 +235,13 @@ async function loadDict(): Promise<void> {
 }
 
 async function loadItems(): Promise<void> {
+  if (tenantActionsLocked.value) {
+    items.value = [];
+    total.value = 0;
+    return;
+  }
   const result = await pageItems(dictId.value, {
-    tenantId: activeTab.value === 'tenant' ? selectedTenantId.value || undefined : undefined,
+    tenantId: activeTab.value === 'tenant' ? selectedTenantId.value : undefined,
     code: query.code || undefined,
     name: query.name || undefined,
     enabled: query.enabled,
@@ -244,6 +262,9 @@ async function reload(): Promise<void> {
 }
 
 function searchItems(): void {
+  if (tenantActionsLocked.value) {
+    return;
+  }
   query.page = 1;
   void reload();
 }
@@ -256,33 +277,44 @@ function onTenantChange(tenant: TenantOption): void {
 }
 
 function onPageChange(page: number): void {
+  if (tenantActionsLocked.value) {
+    return;
+  }
   query.page = page;
   void reload();
 }
 
 function onSizeChange(size: number): void {
+  if (tenantActionsLocked.value) {
+    return;
+  }
   query.size = clampPageSize(size);
   query.page = 1;
   void reload();
 }
 
 function openCreate(): void {
-  if (activeTab.value === 'tenant' && !selectedTenantId.value) {
-    error.value = '请先选择租户';
+  if (tenantActionsLocked.value) {
     return;
   }
+  formError.value = '';
   formMode.value = 'create';
   editing.value = null;
   formVisible.value = true;
 }
 
 function openEdit(item: DictItemDetail): void {
+  if (tenantActionsLocked.value) {
+    return;
+  }
+  formError.value = '';
   formMode.value = 'edit';
   editing.value = item;
   formVisible.value = true;
 }
 
 function openView(item: DictItemDetail): void {
+  formError.value = '';
   formMode.value = 'view';
   editing.value = item;
   formVisible.value = true;
@@ -337,9 +369,10 @@ async function onFormSubmit(payload: CreateItemPayload | UpdateItemPayload): Pro
       await updateItem(editing.value.id, payload as UpdateItemPayload);
     }
     formVisible.value = false;
+    formError.value = '';
     await loadItems();
   } catch (err) {
-    error.value = errorMessage(err);
+    formError.value = errorMessage(err);
   }
 }
 

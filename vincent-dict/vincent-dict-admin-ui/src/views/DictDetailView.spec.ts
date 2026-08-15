@@ -3,6 +3,7 @@ import ElementPlus from 'element-plus';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
+import { ApiError } from '../api/http';
 import type { AdminCapabilities, DictDetail, DictItemDetail, PageResult, TenantOption } from '../api/types';
 import DictDetailView from './DictDetailView.vue';
 
@@ -247,6 +248,39 @@ describe('DictDetailView', () => {
     expect(actions.text()).not.toContain('删除');
     expect(actions.text()).not.toContain('启用');
     expect(actions.text()).not.toContain('停用');
+  });
+
+  it('does not load or mutate default items on the tenant tab until a tenant is selected', async () => {
+    await mountDetail();
+    api.pageItems.mockClear();
+    await openTenantTab();
+
+    expect(wrapper.get('[data-testid="search-items"]').attributes('disabled')).toBeDefined();
+    const pagers = wrapper.findAllComponents({ name: 'ElPagination' });
+    expect(pagers[pagers.length - 1].props('disabled')).toBe(true);
+    expect(wrapper.find('[data-testid="edit-90"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="create-item"]').attributes('disabled')).toBeDefined();
+
+    await wrapper.get('[data-testid="search-items"]').trigger('click');
+    await flushPromises();
+    expect(api.pageItems).not.toHaveBeenCalled();
+    expect(wrapper.text()).not.toContain('WAIT_CONFIRM');
+  });
+
+  it('shows a form API error inside the open item dialog', async () => {
+    api.createDefaultItem.mockRejectedValue(new ApiError('ITEM_CODE_CONFLICT', 'item code already exists'));
+    await mountDetail();
+    await wrapper.get('[data-testid="create-item"]').trigger('click');
+    await nextTick();
+    await wrapper.get('[data-testid="item-code"]').setValue('WAIT_PAY');
+    await wrapper.get('[data-testid="item-name"]').setValue('Pay');
+    await wrapper.get('[data-testid="item-submit"]').trigger('click');
+    await flushPromises();
+    await nextTick();
+
+    const dialog = wrapper.get('.el-dialog');
+    expect(dialog.find('[data-testid="item-submit"]').exists()).toBe(true);
+    expect(dialog.get('[data-testid="error-alert"]').text()).toContain('item code already exists');
   });
 
   it('shows local validation for a lowercase item code', async () => {

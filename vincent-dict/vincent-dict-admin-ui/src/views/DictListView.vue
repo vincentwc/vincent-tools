@@ -108,6 +108,7 @@
       :lock-scroll="false"
       @close="formVisible = false"
     >
+      <ErrorAlert :message="formError" @clear="formError = ''" />
       <DictForm
         :mode="formMode"
         :model="editing ?? undefined"
@@ -155,6 +156,7 @@ import { hasPermission } from '../permissions';
 
 const router = useRouter();
 const error = ref('');
+const formError = ref('');
 const loading = ref(false);
 const capabilities = ref<AdminCapabilities | null>(null);
 const items = ref<DictSummary[]>([]);
@@ -214,12 +216,14 @@ function onSizeChange(size: number): void {
 }
 
 function openCreate(): void {
+  formError.value = '';
   formMode.value = 'create';
   editing.value = null;
   formVisible.value = true;
 }
 
 function openEdit(row: DictSummary): void {
+  formError.value = '';
   formMode.value = 'edit';
   editing.value = row;
   formVisible.value = true;
@@ -274,9 +278,10 @@ async function onFormSubmit(payload: CreateDictPayload | UpdateDictPayload): Pro
       await updateDict(editing.value.id, payload as UpdateDictPayload);
     }
     formVisible.value = false;
+    formError.value = '';
     await load();
   } catch (err) {
-    error.value = errorMessage(err);
+    formError.value = errorMessage(err);
   }
 }
 
