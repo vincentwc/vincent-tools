@@ -1,8 +1,9 @@
 package com.vincent.tools.dict.web;
 
 import com.vincent.tools.dict.application.admin.DictAdminService;
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
+import com.vincent.tools.host.VincentPermission;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -122,7 +123,7 @@ class DictAdminWebAutoConfigurationTest {
         PermissionProvider permissionProvider() {
             return new PermissionProvider() {
                 @Override
-                public boolean hasPermission(com.vincent.tools.dict.application.admin.DictAdminPermission permission,
+                public boolean hasPermission(VincentPermission permission,
                                              Optional<String> targetTenantId) {
                     return true;
                 }
@@ -149,7 +150,7 @@ class DictAdminWebAutoConfigurationTest {
         PermissionProvider permissionProvider() {
             return new PermissionProvider() {
                 @Override
-                public boolean hasPermission(com.vincent.tools.dict.application.admin.DictAdminPermission permission,
+                public boolean hasPermission(VincentPermission permission,
                                              Optional<String> targetTenantId) {
                     return true;
                 }

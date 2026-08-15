@@ -1,5 +1,6 @@
 package com.vincent.tools.dict.web;
 
+import com.vincent.tools.common.web.ApiResponse;
 import com.vincent.tools.dict.application.admin.DictAdminService;
 import com.vincent.tools.dict.web.dto.ItemRequests;
 import org.springframework.web.bind.annotation.DeleteMapping;

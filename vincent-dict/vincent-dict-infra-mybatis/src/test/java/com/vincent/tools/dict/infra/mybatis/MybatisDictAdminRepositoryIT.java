@@ -2,7 +2,7 @@ package com.vincent.tools.dict.infra.mybatis;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
-import com.vincent.tools.dict.application.admin.PageResult;
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.admin.query.DictPageQuery;
 import com.vincent.tools.dict.application.admin.query.ItemPageQuery;
 import com.vincent.tools.dict.application.admin.view.DictItemDetail;

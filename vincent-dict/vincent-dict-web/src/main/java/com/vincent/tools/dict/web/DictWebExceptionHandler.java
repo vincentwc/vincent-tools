@@ -1,5 +1,6 @@
 package com.vincent.tools.dict.web;
 
+import com.vincent.tools.common.web.ApiResponse;
 import com.vincent.tools.dict.domain.DictErrorCode;
 import com.vincent.tools.dict.domain.DictException;
 import org.springframework.http.HttpStatus;

@@ -2,13 +2,14 @@ package com.vincent.tools.dict.infra.mybatis;
 
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.DictLimits;
 import com.vincent.tools.dict.application.admin.DefaultDictAdminService;
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
 import com.vincent.tools.dict.application.admin.DictAdminService;
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PageResult;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
+import com.vincent.tools.host.VincentPermission;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import com.vincent.tools.dict.application.admin.TenantOption;
 import com.vincent.tools.dict.application.admin.command.CreateDictCommand;
@@ -267,7 +268,7 @@ class ConcurrentItemCreateIT {
 
     private static final class AllowAllPermissions implements PermissionProvider {
         @Override
-        public boolean hasPermission(DictAdminPermission permission, Optional<String> targetTenantId) {
+        public boolean hasPermission(VincentPermission permission, Optional<String> targetTenantId) {
             return true;
         }
     }

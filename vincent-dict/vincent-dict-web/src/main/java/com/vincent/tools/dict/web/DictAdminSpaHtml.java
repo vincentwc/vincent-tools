@@ -1,5 +1,6 @@
 package com.vincent.tools.dict.web;
 
+import com.vincent.tools.common.web.VincentAdminSpaHtml;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
@@ -7,9 +8,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 
 final class DictAdminSpaHtml {
+    private static final String CONFIG_GLOBAL_NAME = "__VIN_DICT_CONFIG__";
     static final String RESOURCE_PATH = "META-INF/resources/dict-admin/index.html";
 
     private DictAdminSpaHtml() {
@@ -20,64 +21,11 @@ final class DictAdminSpaHtml {
     }
 
     static byte[] injectBytes(Resource resource, String apiPath, String historyBase) throws IOException {
-        return inject(read(resource), apiPath, historyBase).getBytes(StandardCharsets.UTF_8);
+        return VincentAdminSpaHtml.injectBytes(resource, CONFIG_GLOBAL_NAME, apiPath, historyBase);
     }
 
     static String inject(String html, String apiPath, String historyBase) {
-        String normalizedHistoryBase = normalizeHistoryBase(historyBase);
-        String injectedHead = "<base href=\"" + htmlAttribute(normalizeBaseHref(normalizedHistoryBase)) + "\">"
-                + "<script>window.__VIN_DICT_CONFIG__={"
-                + "\"apiPath\":" + jsonString(apiPath)
-                + ",\"historyBase\":" + jsonString(normalizedHistoryBase)
-                + "};</script>";
-        int headOpen = indexOfIgnoreCase(html, "<head");
-        if (headOpen >= 0) {
-            int headTagEnd = html.indexOf('>', headOpen);
-            if (headTagEnd >= 0) {
-                int insertAt = headTagEnd + 1;
-                return html.substring(0, insertAt) + injectedHead + html.substring(insertAt);
-            }
-        }
-        int scriptTag = indexOfIgnoreCase(html, "<script");
-        if (scriptTag >= 0) {
-            return html.substring(0, scriptTag) + injectedHead + html.substring(scriptTag);
-        }
-        int headEnd = indexOfIgnoreCase(html, "</head>");
-        if (headEnd >= 0) {
-            return html.substring(0, headEnd) + injectedHead + html.substring(headEnd);
-        }
-        return injectedHead + html;
-    }
-
-    private static String normalizeHistoryBase(String historyBase) {
-        String base = historyBase == null || historyBase.length() == 0 ? "/dict-admin" : historyBase;
-        if (base.endsWith("/") && base.length() > 1) {
-            return base.substring(0, base.length() - 1);
-        }
-        return base;
-    }
-
-    private static String normalizeBaseHref(String historyBase) {
-        String base = normalizeHistoryBase(historyBase);
-        return base.endsWith("/") ? base : base + "/";
-    }
-
-    private static String htmlAttribute(String value) {
-        StringBuilder builder = new StringBuilder(value.length());
-        for (int index = 0; index < value.length(); index++) {
-            char ch = value.charAt(index);
-            switch (ch) {
-                case '&':
-                    builder.append("&amp;");
-                    break;
-                case '"':
-                    builder.append("&quot;");
-                    break;
-                default:
-                    builder.append(ch);
-            }
-        }
-        return builder.toString();
+        return VincentAdminSpaHtml.inject(html, CONFIG_GLOBAL_NAME, apiPath, historyBase);
     }
 
     private static String read(Resource resource) throws IOException {
@@ -93,34 +41,5 @@ final class DictAdminSpaHtml {
         } finally {
             input.close();
         }
-    }
-
-    private static int indexOfIgnoreCase(String html, String token) {
-        return html.toLowerCase(Locale.ROOT).indexOf(token.toLowerCase(Locale.ROOT));
-    }
-
-    private static String jsonString(String value) {
-        String text = value == null ? "" : value;
-        StringBuilder builder = new StringBuilder(text.length() + 2);
-        builder.append('"');
-        for (int index = 0; index < text.length(); index++) {
-            char ch = text.charAt(index);
-            switch (ch) {
-                case '\\':
-                case '"':
-                    builder.append('\\').append(ch);
-                    break;
-                case '\n':
-                    builder.append('\\').append('n');
-                    break;
-                case '\r':
-                    builder.append('\\').append('r');
-                    break;
-                default:
-                    builder.append(ch);
-            }
-        }
-        builder.append('"');
-        return builder.toString();
     }
 }

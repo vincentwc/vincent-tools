@@ -3,10 +3,11 @@ package com.vincent.tools.dict.cache.redis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vincent.tools.common.cache.redis.RateLimitedCacheLogger;
+import com.vincent.tools.common.cache.redis.RedisScriptLoader;
 import com.vincent.tools.dict.application.DictItemView;
 import com.vincent.tools.dict.application.port.DictCache;
 import com.vincent.tools.dict.domain.DictItemSource;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
@@ -35,8 +36,8 @@ public final class RedisDictCache implements DictCache {
         this.objectMapper = cacheObjectMapper();
         this.properties = Objects.requireNonNull(properties, "properties");
         this.keys = new DictCacheKeyFactory(properties.getKeyPrefix());
-        this.putIfUnchanged = loadPutScript();
-        this.logger = new RateLimitedCacheLogger();
+        this.putIfUnchanged = RedisScriptLoader.loadLongScript(PUT_SCRIPT_PATH);
+        this.logger = new RateLimitedCacheLogger(RedisDictCache.class);
     }
 
     @Override
@@ -204,13 +205,6 @@ public final class RedisDictCache implements DictCache {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
-    }
-
-    private static DefaultRedisScript<Long> loadPutScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<Long>();
-        script.setLocation(new ClassPathResource(PUT_SCRIPT_PATH));
-        script.setResultType(Long.class);
-        return script;
     }
 
     private static final class Snapshot {

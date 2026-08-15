@@ -1,7 +1,7 @@
 package com.vincent.tools.dict.web;
 
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.PermissionProvider;
 import com.vincent.tools.dict.domain.DictErrorCode;
 import com.vincent.tools.dict.domain.DictException;
 import org.springframework.core.io.ByteArrayResource;
