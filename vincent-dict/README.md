@@ -35,7 +35,7 @@ Vincent Dict never runs DDL at application startup.
 </dependencies>
 ```
 
-宿主还需自行提供 Spring Boot 数据源与 MyBatis `SqlSessionFactory`（常见组合：`spring-boot-starter-jdbc` 或已有 JDBC 起步依赖，加上 `mybatis-plus-boot-starter` 3.3.2）以及 MySQL 驱动。核心 Starter 不创建连接池，不读取独立数据库账号密码，也不引入 Redis。
+宿主还需自行提供 Spring Boot 数据源与 MyBatis `SqlSessionFactory`（常见组合：`spring-boot-starter-jdbc` 或已有 JDBC 起步依赖，加上 `mybatis-plus-boot-starter` 3.3.2）以及 MySQL 驱动。核心 Starter 不创建连接池，不读取独立数据库账号密码，也不引入 Redis。查询缓存默认是进程内空操作；需要跨实例失效时再按需引入 Redis Starter，见下方「可选 Redis 缓存」。
 
 非 Web 宿主可以只使用 Java 查询 API。不要为了查询去引入 Spring MVC；管理端默认关闭。没有 Web 容器时，请用手工 SQL 或已有运维流程维护字典，不要把示例适配器或管理页面当成生产写入通道。
 
@@ -109,6 +109,39 @@ vincent:
 ```
 
 所选 `SqlSessionFactory` 与事务管理器必须绑定到同一 `DataSource`。Starter 不覆盖宿主 Bean，也不修改宿主全局 MyBatis 配置。
+
+## 可选 Redis 缓存
+
+核心 Starter 不引入 Redis 客户端。只有业务系统额外依赖 BOM 管理的 `vincent-dict-cache-redis-boot2-starter`，并提供宿主 `StringRedisTemplate` 时，才会启用跨实例查询缓存。常见做法是同时引入 `spring-boot-starter-data-redis`（或等价配置）来创建该模板；Dict Redis Starter 不会自己建立连接工厂。
+
+```xml
+<dependency>
+    <groupId>com.vincent.tools</groupId>
+    <artifactId>vincent-dict-cache-redis-boot2-starter</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+```yaml
+vincent:
+  dict:
+    cache:
+      enabled: true
+      key-prefix: vin:dict
+      ttl: 60s
+```
+
+- **按需启用**：`vincent.dict.cache.enabled` 默认为 `false`。未启用或未引入 Redis Starter 时，查询走 MySQL，写入后的 `evict` 是空操作。
+- **宿主模板**：`enabled=true` 时必须已有 `StringRedisTemplate`，否则启动失败（`CONFIGURATION_INVALID`）。
+- **键前缀隔离**：`key-prefix` 必须非空，默认 `vin:dict`。不同环境或不同宿主应使用不同前缀，避免共用一个 Redis 时互相覆盖。
+- **TTL**：载荷默认 60 秒。命中保留不可变、已排序的查询 DTO，不暴露 PO 或领域对象。
+- **失效**：默认项变更递增全局版本，使所有租户缓存失效；租户项变更只递增该租户版本。不使用 `KEYS`、通配扫描或发布订阅。
+- **正常路径**：Redis 健康时，一次成功写入后的下一次查询应立即看到新值，不必等待 TTL。
+- **故障回退**：Redis 读/写失败时回退到 MySQL，并按故障类别限流打日志。已缓存的陈旧值最多再保留一个 TTL。
+- **一致性**：第一版在 Redis 不可用时不提供强一致性。多实例在 Redis 故障期间可能读到最多一个 TTL 的陈旧数据。
 
 ## 管理端
 
@@ -187,4 +220,4 @@ CONFIGURATION_INVALID
 
 ## 最小示例
 
-`vincent-dict-example-boot2` 是非 Web 的 Spring Boot `2.2.6.RELEASE` / Java 8 宿主：只依赖核心 Starter，注册 `TenantProvider`，由集成测试在 Spring 启动前手工执行初始化 SQL 与演示数据。演示数据只存在于测试资源，不会进入 Starter。
+`vincent-dict-example-boot2` 是非 Web 的 Spring Boot `2.2.6.RELEASE` / Java 8 宿主：常规配置只依赖核心 Starter，注册 `TenantProvider`，由集成测试在 Spring 启动前手工执行初始化 SQL 与演示数据。演示数据只存在于测试资源，不会进入 Starter。Redis Starter 与 `StringRedisTemplate` 只出现在示例模块的测试作用域，用来证明跨实例失效；不要把它们当成常规示例运行时的必需依赖。

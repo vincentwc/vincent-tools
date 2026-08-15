@@ -12,3 +12,5 @@ vincent:
     enabled: true
     admin:
       enabled: false
+    # Redis cache is optional and not required for the regular example.
+    # Enable only in tests or hosts that also provide StringRedisTemplate.

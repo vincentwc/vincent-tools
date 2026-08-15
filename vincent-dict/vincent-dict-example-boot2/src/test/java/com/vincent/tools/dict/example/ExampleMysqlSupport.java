@@ -29,7 +29,7 @@ final class ExampleMysqlSupport {
     private ExampleMysqlSupport() {
     }
 
-    static void register(DynamicPropertyRegistry registry) {
+    static void ensureStarted() {
         MYSQL.start();
         if (SCHEMA_APPLIED.compareAndSet(false, true)) {
             try {
@@ -39,6 +39,10 @@ final class ExampleMysqlSupport {
                 throw new IllegalStateException("failed to apply dictionary SQL before Spring startup", ex);
             }
         }
+    }
+
+    static void register(DynamicPropertyRegistry registry) {
+        ensureStarted();
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);

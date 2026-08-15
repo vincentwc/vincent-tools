@@ -16,4 +16,4 @@
 
 字典查询组件。消费者说明见 [vincent-dict/README.md](vincent-dict/README.md)。
 
-兼容性基线：Java 8、Spring Boot `2.2.6.RELEASE`、MyBatis-Plus `3.3.2`、MySQL 5.7+。
+兼容性基线：Java 8、Spring Boot `2.2.6.RELEASE`、MyBatis-Plus `3.3.2`、MySQL 5.7+。核心查询不依赖 Redis；跨实例缓存是按需启用的额外 Starter，需要宿主提供 `StringRedisTemplate`，默认 TTL 60 秒。Redis 健康时写入后立即可见；Redis 不可用时回退 MySQL，第一版不提供强一致性。
