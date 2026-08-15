@@ -1,0 +1,6 @@
+vincent:
+  dict:
+    cache:
+      enabled: true
+      key-prefix: vin:dict:test
+      ttl: 60s

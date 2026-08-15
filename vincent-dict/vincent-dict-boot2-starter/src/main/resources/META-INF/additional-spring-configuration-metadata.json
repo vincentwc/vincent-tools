@@ -1,0 +1,73 @@
+{
+  "properties": [
+    {
+      "name": "vincent.dict.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable Vincent Dict query auto-configuration and schema validation.",
+      "defaultValue": true
+    },
+    {
+      "name": "vincent.dict.data-source-bean-name",
+      "type": "java.lang.String",
+      "description": "Optional host DataSource bean name. Must be set together with the SqlSessionFactory and transaction manager names."
+    },
+    {
+      "name": "vincent.dict.sql-session-factory-bean-name",
+      "type": "java.lang.String",
+      "description": "Optional host SqlSessionFactory bean name. Must be set together with the DataSource and transaction manager names."
+    },
+    {
+      "name": "vincent.dict.transaction-manager-bean-name",
+      "type": "java.lang.String",
+      "description": "Optional host PlatformTransactionManager bean name. Must be set together with the DataSource and SqlSessionFactory names."
+    },
+    {
+      "name": "vincent.dict.admin.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable the embedded admin UI and API when the host is a Servlet web application and provides OperatorProvider plus PermissionProvider.",
+      "defaultValue": false
+    },
+    {
+      "name": "vincent.dict.admin.base-path",
+      "type": "java.lang.String",
+      "description": "Admin page base path.",
+      "defaultValue": "/dict-admin"
+    },
+    {
+      "name": "vincent.dict.admin.api-path",
+      "type": "java.lang.String",
+      "description": "Admin API prefix.",
+      "defaultValue": "/vincent/dict/admin/api/v1"
+    },
+    {
+      "name": "vincent.dict.limits.default-items-per-dict",
+      "type": "java.lang.Integer",
+      "description": "Maximum default items allowed per dictionary.",
+      "defaultValue": 1000
+    },
+    {
+      "name": "vincent.dict.limits.tenant-items-per-dict",
+      "type": "java.lang.Integer",
+      "description": "Maximum tenant items allowed per dictionary.",
+      "defaultValue": 1000
+    },
+    {
+      "name": "vincent.dict.limits.max-effective-items",
+      "type": "java.lang.Integer",
+      "description": "Maximum effective items returned by a query. Must be >= default-items-per-dict + tenant-items-per-dict.",
+      "defaultValue": 2000
+    },
+    {
+      "name": "vincent.dict.limits.default-page-size",
+      "type": "java.lang.Integer",
+      "description": "Default admin page size.",
+      "defaultValue": 20
+    },
+    {
+      "name": "vincent.dict.limits.max-page-size",
+      "type": "java.lang.Integer",
+      "description": "Maximum admin page size. Must be >= default-page-size.",
+      "defaultValue": 100
+    }
+  ]
+}

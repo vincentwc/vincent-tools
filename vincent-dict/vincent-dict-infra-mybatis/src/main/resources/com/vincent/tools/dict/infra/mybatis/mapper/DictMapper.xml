@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vincent.tools.dict.infra.mybatis.mapper.DictMapper">
+
+    <resultMap id="DictPoMap" type="com.vincent.tools.dict.infra.mybatis.po.DictPo">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="version" property="version"/>
+        <result column="deleted" property="deleted"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_at" property="createdAt"
+                typeHandler="com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_at" property="updatedAt"
+                typeHandler="com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler"/>
+    </resultMap>
+
+    <sql id="dictColumns">
+        id, code, name, description, status, sort_no, version, deleted,
+        created_by, created_at, updated_by, updated_at
+    </sql>
+
+    <sql id="dictPageFilters">
+        <if test="code != null and code != ''">
+            AND code = #{code}
+        </if>
+        <if test="name != null and name != ''">
+            AND name = #{name}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="!includeDeleted">
+            AND deleted = 0
+        </if>
+    </sql>
+
+    <select id="selectPresentByCode" resultMap="DictPoMap">
+        SELECT <include refid="dictColumns"/>
+        FROM vin_dict
+        WHERE code = #{code}
+          AND deleted = 0
+    </select>
+
+    <select id="selectById" resultMap="DictPoMap">
+        SELECT <include refid="dictColumns"/>
+        FROM vin_dict
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdForUpdate" resultMap="DictPoMap">
+        SELECT <include refid="dictColumns"/>
+        FROM vin_dict
+        WHERE id = #{id}
+        FOR UPDATE
+    </select>
+
+    <select id="countByCode" resultType="int">
+        SELECT COUNT(*)
+        FROM vin_dict
+        WHERE code = #{code}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO vin_dict (code, name, description, status, sort_no, version, deleted,
+                              created_by, created_at, updated_by, updated_at)
+        VALUES (#{code}, #{name}, #{description}, #{status}, #{sortNo}, #{version}, #{deleted},
+                #{createdBy},
+                #{createdAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler},
+                #{updatedBy},
+                #{updatedAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler})
+    </insert>
+
+    <update id="update">
+        UPDATE vin_dict
+        SET name = #{po.name},
+            description = #{po.description},
+            status = #{po.status},
+            sort_no = #{po.sortNo},
+            deleted = #{po.deleted},
+            updated_by = #{po.updatedBy},
+            updated_at = #{po.updatedAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler},
+            version = version + 1
+        WHERE id = #{po.id}
+          AND version = #{expectedVersion}
+    </update>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*)
+        FROM vin_dict
+        <where>
+            <include refid="dictPageFilters"/>
+        </where>
+    </select>
+
+    <select id="selectPage" resultMap="DictPoMap">
+        SELECT <include refid="dictColumns"/>
+        FROM vin_dict
+        <where>
+            <include refid="dictPageFilters"/>
+        </where>
+        ORDER BY sort_no, code, id
+        LIMIT #{offset}, #{limit}
+    </select>
+</mapper>
