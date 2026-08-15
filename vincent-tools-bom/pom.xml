@@ -70,6 +70,36 @@
                 <artifactId>vincent-common-cache-redis</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-application</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-infra-mybatis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-admin-ui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-boot2-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>
