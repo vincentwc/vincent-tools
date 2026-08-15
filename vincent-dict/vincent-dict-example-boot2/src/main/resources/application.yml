@@ -1,6 +1,6 @@
 spring:
   main:
-    web-application-type: none
+    web-application-type: servlet
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/vincent_dict?useSSL=false&characterEncoding=utf8
     username: vincent_dict
@@ -11,6 +11,8 @@ vincent:
   dict:
     enabled: true
     admin:
-      enabled: false
+      enabled: true
+      base-path: /dict-admin
+      api-path: /vincent/dict/admin/api/v1
     # Redis cache is optional and not required for the regular example.
     # Enable only in tests or hosts that also provide StringRedisTemplate.

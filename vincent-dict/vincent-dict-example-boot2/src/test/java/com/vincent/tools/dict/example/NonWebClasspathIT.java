@@ -9,7 +9,13 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = DictExampleApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(
+        classes = DictExampleApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = {
+                "spring.main.web-application-type=none",
+                "vincent.dict.admin.enabled=false"
+        })
 class NonWebClasspathIT {
     @Autowired
     private ApplicationContext context;
