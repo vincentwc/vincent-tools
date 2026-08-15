@@ -1,0 +1,9 @@
+spring:
+  main:
+    web-application-type: servlet
+
+vincent:
+  region:
+    enabled: true
+    admin:
+      enabled: true

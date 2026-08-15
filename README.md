@@ -32,3 +32,7 @@
 | `vincent-export-core` | EasyExcel 流式读写封装 |
 
 详见各模块 README：`vincent-common/vincent-id-core/README.md`、`vincent-common/vincent-export-core/README.md`。
+
+## Vincent Region
+
+中国省市区三级树查询（Phase 4）：`RegionQueryService.findByCode` / `listChildren`、可选只读管理 API。说明见 [vincent-region/README.md](vincent-region/README.md)。
