@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.vincent.tools.dict.infra.mybatis.mapper.DictMapper">
+
+    <resultMap id="DictPoMap" type="com.vincent.tools.dict.infra.mybatis.po.DictPo">
+        <id column="id" property="id"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="sort_no" property="sortNo"/>
+        <result column="version" property="version"/>
+        <result column="deleted" property="deleted"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectPresentByCode" resultMap="DictPoMap">
+        SELECT id, code, name, description, status, sort_no, version, deleted,
+               created_by, created_at, updated_by, updated_at
+        FROM vin_dict
+        WHERE code = #{code}
+          AND deleted = 0
+    </select>
+</mapper>
