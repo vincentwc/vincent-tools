@@ -61,6 +61,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -298,9 +299,13 @@ class DictAdminControllerTest {
                 .andExpect(jsonPath("$.data.total").value(1));
 
         mockMvc.perform(get("/dict-admin"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("window.__VIN_DICT_CONFIG__")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"apiPath\":\"/vincent/dict/admin/api/v1\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"historyBase\":\"/dict-admin\"")));
         mockMvc.perform(get("/dict-admin/"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("window.__VIN_DICT_CONFIG__")));
     }
 
     private MockMvc mockMvc(TenantDirectory directory) {

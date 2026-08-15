@@ -37,7 +37,7 @@ Vincent Dict never runs DDL at application startup.
 
 宿主还需自行提供 Spring Boot 数据源与 MyBatis `SqlSessionFactory`（常见组合：`spring-boot-starter-jdbc` 或已有 JDBC 起步依赖，加上 `mybatis-plus-boot-starter` 3.3.2）以及 MySQL 驱动。核心 Starter 不创建连接池，不读取独立数据库账号密码，也不引入 Redis。
 
-非 Web 宿主可以只使用 Java 查询 API。不要为了查询去引入 Spring MVC；管理端默认关闭。
+非 Web 宿主可以只使用 Java 查询 API。不要为了查询去引入 Spring MVC；管理端默认关闭。没有 Web 容器时，请用手工 SQL 或已有运维流程维护字典，不要把示例适配器或管理页面当成生产写入通道。
 
 ## 手工 SQL
 
@@ -109,6 +109,33 @@ vincent:
 ```
 
 所选 `SqlSessionFactory` 与事务管理器必须绑定到同一 `DataSource`。Starter 不覆盖宿主 Bean，也不修改宿主全局 MyBatis 配置。
+
+## 管理端
+
+管理控制台打进同一个核心 Starter，默认关闭。只有同时满足以下条件才会暴露页面和 API：
+
+- 宿主是 Servlet Web 应用（提供 Spring MVC / `DispatcherServlet`，通常再引入 `spring-boot-starter-web`）
+- `vincent.dict.admin.enabled=true`
+- 宿主注册了 `OperatorProvider` 和 `PermissionProvider`
+
+```yaml
+vincent:
+  dict:
+    admin:
+      enabled: true
+      base-path: /dict-admin
+      api-path: /vincent/dict/admin/api/v1
+```
+
+- **SPA**：`GET {base-path}`，默认 `/dict-admin`。页面 HTML 会在应用脚本之前注入 `window.__VIN_DICT_CONFIG__`（`apiPath`、`historyBase`）。
+- **API**：`{api-path}`，默认 `/vincent/dict/admin/api/v1`。
+- **操作人**：`OperatorProvider.currentOperatorId()` 必须返回非空、无需去空白、最长 64 字符的标识，写入元数据使用该值。
+- **权限**：每次管理操作都调用 `PermissionProvider.hasPermission(permission, targetTenantId)`。租户条目的创建/修改/启停/删除/恢复必须带目标租户 ID；默认字典/默认条目使用空 `Optional`。
+- **租户目录**：`TenantDirectory` 可选。缺少时默认条目管理仍可用，租户条目读写和租户搜索返回 `CONFIGURATION_INVALID`，UI 会隐藏租户页。
+- **认证与 CSRF**：Starter 不实现登录、会话或 CSRF。宿主必须自行保护 `/dict-admin/**` 与管理 API，并在浏览器会话场景下处理 CSRF。
+- **非 Web**：`spring.main.web-application-type=none` 或没有 `DispatcherServlet` 时，不会创建控制器、`DispatcherServlet` 或嵌入式服务器。查询专用宿主不要为了管理端去引入 MVC。
+
+示例模块 `vincent-dict-example-boot2` 提供演示用适配器（操作人 `example-admin`、全放行权限、内存租户目录），仅用于仓库内验收，不要照搬到生产。
 
 ## 编码规则
 

@@ -5,10 +5,19 @@ import com.vincent.tools.dict.application.DictLimits;
 import com.vincent.tools.dict.application.DictQueryService;
 import com.vincent.tools.dict.application.SingleTenantProvider;
 import com.vincent.tools.dict.application.TenantProvider;
+import com.vincent.tools.dict.application.admin.DefaultDictAdminService;
+import com.vincent.tools.dict.application.admin.DictAdminService;
+import com.vincent.tools.dict.application.admin.OperatorProvider;
+import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.dict.application.admin.TenantDirectory;
+import com.vincent.tools.dict.application.port.DictAdminRepository;
 import com.vincent.tools.dict.application.port.DictCache;
 import com.vincent.tools.dict.application.port.DictQueryRepository;
 import com.vincent.tools.dict.application.port.NoopDictCache;
+import com.vincent.tools.dict.application.port.TxRunner;
+import com.vincent.tools.dict.infra.mybatis.MybatisDictAdminRepository;
 import com.vincent.tools.dict.infra.mybatis.MybatisDictQueryRepository;
+import com.vincent.tools.dict.infra.mybatis.SpringTxRunner;
 import com.vincent.tools.dict.infra.mybatis.mapper.DictItemMapper;
 import com.vincent.tools.dict.infra.mybatis.mapper.DictMapper;
 import org.springframework.beans.factory.ObjectProvider;
@@ -19,6 +28,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.Clock;
 
 @Configuration
 @EnableConfigurationProperties(DictProperties.class)
@@ -52,7 +64,10 @@ public class DictCoreAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean(DictLimits.class)
         public DictLimits dictLimits(DictProperties properties) {
-            return new DictLimits(properties.getLimits().getMaxEffectiveItems());
+            return new DictLimits(
+                    properties.getLimits().getMaxEffectiveItems(),
+                    properties.getLimits().getDefaultItemsPerDict(),
+                    properties.getLimits().getTenantItemsPerDict());
         }
 
         @Bean
@@ -83,6 +98,50 @@ public class DictCoreAutoConfiguration {
                     tenantProviders.getIfAvailable(SingleTenantProvider::new),
                     caches.getIfAvailable(NoopDictCache::new),
                     limits);
+        }
+
+        @Configuration
+        @ConditionalOnProperty(prefix = "vincent.dict.admin", name = "enabled", havingValue = "true")
+        static class AdminConfiguration {
+            @Bean
+            @ConditionalOnMissingBean(DictAdminRepository.class)
+            public DictAdminRepository dictAdminRepository(ObjectProvider<DictMapper> dictMappers,
+                                                           ObjectProvider<DictItemMapper> dictItemMappers) {
+                return new MybatisDictAdminRepository(dictMappers.getObject(), dictItemMappers.getObject());
+            }
+
+            @Bean
+            @ConditionalOnMissingBean(TxRunner.class)
+            public TxRunner dictTxRunner(DictInfrastructureResolver resolver, ApplicationContext context) {
+                return new SpringTxRunner(new TransactionTemplate(resolver.getTransactionManager(context)));
+            }
+
+            @Bean
+            @ConditionalOnMissingBean(Clock.class)
+            public Clock dictClock() {
+                return Clock.systemUTC();
+            }
+
+            @Bean
+            @ConditionalOnMissingBean(DictAdminService.class)
+            public DictAdminService dictAdminService(DictAdminRepository repository,
+                                                     TxRunner txRunner,
+                                                     ObjectProvider<DictCache> caches,
+                                                     OperatorProvider operatorProvider,
+                                                     PermissionProvider permissionProvider,
+                                                     ObjectProvider<TenantDirectory> tenantDirectories,
+                                                     DictLimits limits,
+                                                     Clock clock) {
+                return new DefaultDictAdminService(
+                        repository,
+                        txRunner,
+                        caches.getIfAvailable(NoopDictCache::new),
+                        operatorProvider,
+                        permissionProvider,
+                        tenantDirectories.getIfAvailable(),
+                        limits,
+                        clock);
+            }
         }
     }
 }

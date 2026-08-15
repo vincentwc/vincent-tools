@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.HttpResource;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,9 +27,15 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
     private static final CacheControl HTML_CACHE = CacheControl.noStore();
 
     private final String basePath;
+    private final String apiPath;
 
     public DictAdminResourceHandler(String basePath) {
+        this(basePath, "/vincent/dict/admin/api/v1");
+    }
+
+    public DictAdminResourceHandler(String basePath, String apiPath) {
         this.basePath = basePath;
+        this.apiPath = apiPath == null || apiPath.length() == 0 ? "/vincent/dict/admin/api/v1" : apiPath;
     }
 
     @Override
@@ -70,20 +77,30 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
         return slash >= 0 ? resourcePath.substring(slash + 1) : resourcePath;
     }
 
-    private static final class SpaIndexFallbackResolver extends PathResourceResolver {
+    private String historyBase() {
+        if (basePath == null || basePath.length() == 0) {
+            return "/dict-admin";
+        }
+        if (basePath.endsWith("/") && basePath.length() > 1) {
+            return basePath.substring(0, basePath.length() - 1);
+        }
+        return basePath;
+    }
+
+    private final class SpaIndexFallbackResolver extends PathResourceResolver {
         @Override
         protected Resource getResource(String resourcePath, Resource location) throws IOException {
             Resource resource = super.getResource(resourcePath, location);
             if (resource != null) {
-                return CacheControlledResource.wrap(resource, resourcePath);
+                return CacheControlledResource.wrap(resource, resourcePath, apiPath, historyBase());
             }
             if (looksLikeStaticAsset(resourcePath)) {
                 return null;
             }
-            return CacheControlledResource.wrap(location.createRelative("index.html"), "index.html");
+            return CacheControlledResource.wrap(location.createRelative("index.html"), "index.html", apiPath, historyBase());
         }
 
-        private static boolean looksLikeStaticAsset(String path) {
+        private boolean looksLikeStaticAsset(String path) {
             String lower = path.toLowerCase(Locale.ROOT);
             return lower.endsWith(".js") || lower.endsWith(".css") || lower.endsWith(".map")
                     || lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg")
@@ -95,14 +112,33 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
     private static final class CacheControlledResource implements HttpResource {
         private final Resource delegate;
         private final CacheControl cacheControl;
+        private final String apiPath;
+        private final String historyBase;
+        private final boolean injectConfig;
+        private byte[] injected;
 
-        private CacheControlledResource(Resource delegate, CacheControl cacheControl) {
+        private CacheControlledResource(Resource delegate, CacheControl cacheControl,
+                                        String apiPath, String historyBase, boolean injectConfig) {
             this.delegate = delegate;
             this.cacheControl = cacheControl;
+            this.apiPath = apiPath;
+            this.historyBase = historyBase;
+            this.injectConfig = injectConfig;
         }
 
-        static Resource wrap(Resource resource, String resourcePath) {
-            return new CacheControlledResource(resource, cacheControlFor(resourcePath));
+        static Resource wrap(Resource resource, String resourcePath, String apiPath, String historyBase) {
+            boolean inject = "index.html".equals(fileNameOf(resourcePath));
+            return new CacheControlledResource(resource, cacheControlFor(resourcePath), apiPath, historyBase, inject);
+        }
+
+        private byte[] injectedBody() throws IOException {
+            if (!injectConfig) {
+                return null;
+            }
+            if (injected == null) {
+                injected = DictAdminSpaHtml.injectBytes(delegate, apiPath, historyBase);
+            }
+            return injected;
         }
 
         @Override
@@ -132,7 +168,7 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
 
         @Override
         public boolean isFile() {
-            return delegate.isFile();
+            return !injectConfig && delegate.isFile();
         }
 
         @Override
@@ -152,7 +188,8 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
 
         @Override
         public long contentLength() throws IOException {
-            return delegate.contentLength();
+            byte[] body = injectedBody();
+            return body != null ? body.length : delegate.contentLength();
         }
 
         @Override
@@ -177,6 +214,10 @@ public class DictAdminResourceHandler implements WebMvcConfigurer {
 
         @Override
         public InputStream getInputStream() throws IOException {
+            byte[] body = injectedBody();
+            if (body != null) {
+                return new ByteArrayInputStream(body);
+            }
             return delegate.getInputStream();
         }
     }

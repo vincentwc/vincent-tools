@@ -4,8 +4,15 @@ import com.vincent.tools.dict.application.DictLimits;
 import com.vincent.tools.dict.application.DictQueryService;
 import com.vincent.tools.dict.application.SingleTenantProvider;
 import com.vincent.tools.dict.application.TenantProvider;
+import com.vincent.tools.dict.application.admin.DefaultDictAdminService;
+import com.vincent.tools.dict.application.admin.DictAdminPermission;
+import com.vincent.tools.dict.application.admin.DictAdminService;
+import com.vincent.tools.dict.application.admin.OperatorProvider;
+import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.dict.application.port.DictAdminRepository;
 import com.vincent.tools.dict.application.port.DictCache;
 import com.vincent.tools.dict.application.port.NoopDictCache;
+import com.vincent.tools.dict.application.port.TxRunner;
 import com.vincent.tools.dict.domain.DictErrorCode;
 import com.vincent.tools.dict.domain.DictException;
 import org.apache.ibatis.mapping.Environment;
@@ -29,6 +36,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Clock;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -109,7 +118,44 @@ class DictCoreAutoConfigurationTest {
                         "vincent.dict.limits.default-items-per-dict=10",
                         "vincent.dict.limits.tenant-items-per-dict=10",
                         "vincent.dict.limits.max-effective-items=50")
-                .run(context -> assertThat(context.getBean(DictLimits.class).getMaxEffectiveItems()).isEqualTo(50));
+                .run(context -> {
+                    DictLimits limits = context.getBean(DictLimits.class);
+                    assertThat(limits.getMaxEffectiveItems()).isEqualTo(50);
+                    assertThat(limits.getDefaultItemsPerDict()).isEqualTo(10);
+                    assertThat(limits.getTenantItemsPerDict()).isEqualTo(10);
+                });
+    }
+
+    @Test
+    void admin_disabled_does_not_wire_admin_service() {
+        contextRunner.withUserConfiguration(SingleInfrastructureConfiguration.class)
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).doesNotHaveBean(DictAdminService.class);
+                    assertThat(context).doesNotHaveBean(DictAdminRepository.class);
+                    assertThat(context).doesNotHaveBean(TxRunner.class);
+                });
+    }
+
+    @Test
+    void admin_enabled_without_operator_provider_fails() {
+        contextRunner.withUserConfiguration(SingleInfrastructureConfiguration.class)
+                .withPropertyValues("vincent.dict.admin.enabled=true")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Test
+    void admin_enabled_wires_admin_service_repository_tx_and_utc_clock() {
+        contextRunner.withUserConfiguration(SingleInfrastructureConfiguration.class, AdminAdaptersConfiguration.class)
+                .withPropertyValues("vincent.dict.admin.enabled=true")
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(DictAdminService.class);
+                    assertThat(context.getBean(DictAdminService.class)).isInstanceOf(DefaultDictAdminService.class);
+                    assertThat(context).hasSingleBean(DictAdminRepository.class);
+                    assertThat(context).hasSingleBean(TxRunner.class);
+                    assertThat(context.getBean(Clock.class).getZone()).isEqualTo(ZoneOffset.UTC);
+                });
     }
 
     @Test
@@ -218,6 +264,29 @@ class DictCoreAutoConfigurationTest {
             current = current.getCause();
         }
         throw new AssertionError("DictException was not thrown", context.getStartupFailure());
+    }
+
+    @Configuration
+    static class AdminAdaptersConfiguration {
+        @Bean
+        OperatorProvider operatorProvider() {
+            return new OperatorProvider() {
+                @Override
+                public String currentOperatorId() {
+                    return "operator";
+                }
+            };
+        }
+
+        @Bean
+        PermissionProvider permissionProvider() {
+            return new PermissionProvider() {
+                @Override
+                public boolean hasPermission(DictAdminPermission permission, Optional<String> targetTenantId) {
+                    return true;
+                }
+            };
+        }
     }
 
     @Configuration

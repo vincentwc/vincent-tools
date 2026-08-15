@@ -85,6 +85,7 @@ class DictAdminWebAutoConfigurationTest {
                     assertThat(context).hasSingleBean(TenantAdminController.class);
                     assertThat(context).hasSingleBean(DictAdminPageController.class);
                     assertThat(context).hasSingleBean(DictAdminResourceHandler.class);
+                    assertThat(context).hasSingleBean(DictAdminPageAuthFilter.class);
                     assertThat(context).hasSingleBean(DictWebExceptionHandler.class);
                 });
     }

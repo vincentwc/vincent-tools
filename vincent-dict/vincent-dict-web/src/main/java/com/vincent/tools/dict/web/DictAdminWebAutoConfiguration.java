@@ -5,6 +5,7 @@ import com.vincent.tools.dict.application.admin.OperatorProvider;
 import com.vincent.tools.dict.application.admin.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -18,6 +19,7 @@ import java.util.Objects;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(name = "org.springframework.web.servlet.DispatcherServlet")
 @ConditionalOnProperty(prefix = "vincent.dict.admin", name = "enabled", havingValue = "true")
+@AutoConfigureAfter(name = "com.vincent.tools.dict.boot2.DictCoreAutoConfiguration")
 @EnableConfigurationProperties(DictAdminWebProperties.class)
 public class DictAdminWebAutoConfiguration {
     private final PermissionProvider permissionProvider;
@@ -50,12 +52,17 @@ public class DictAdminWebAutoConfiguration {
     }
 
     @Bean
-    public DictAdminPageController dictAdminPageController() {
-        return new DictAdminPageController(permissionProvider);
+    public DictAdminPageAuthFilter dictAdminPageAuthFilter(DictAdminWebProperties properties) {
+        return new DictAdminPageAuthFilter(permissionProvider, properties.getBasePath());
+    }
+
+    @Bean
+    public DictAdminPageController dictAdminPageController(DictAdminWebProperties properties) {
+        return new DictAdminPageController(permissionProvider, properties);
     }
 
     @Bean
     public DictAdminResourceHandler dictAdminResourceHandler(DictAdminWebProperties properties) {
-        return new DictAdminResourceHandler(properties.getBasePath());
+        return new DictAdminResourceHandler(properties.getBasePath(), properties.getApiPath());
     }
 }

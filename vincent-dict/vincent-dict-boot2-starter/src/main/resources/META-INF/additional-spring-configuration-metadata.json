@@ -24,7 +24,7 @@
     {
       "name": "vincent.dict.admin.enabled",
       "type": "java.lang.Boolean",
-      "description": "Enable the embedded admin UI and API. Unused by the core starter.",
+      "description": "Enable the embedded admin UI and API when the host is a Servlet web application and provides OperatorProvider plus PermissionProvider.",
       "defaultValue": false
     },
     {

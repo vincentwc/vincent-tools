@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.vincent.tools.dict.boot2.DictCoreAutoConfiguration
+com.vincent.tools.dict.boot2.DictCoreAutoConfiguration,\
+com.vincent.tools.dict.web.DictAdminWebAutoConfiguration
