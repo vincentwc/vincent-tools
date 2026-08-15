@@ -1,4 +1,5 @@
 .superpowers/
+.worktrees/
 .idea/
 **/target/
 **/node_modules/
