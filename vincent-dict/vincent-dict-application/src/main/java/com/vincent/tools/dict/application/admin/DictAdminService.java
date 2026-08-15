@@ -1,5 +1,6 @@
 package com.vincent.tools.dict.application.admin;
 
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.admin.command.CreateDictCommand;
 import com.vincent.tools.dict.application.admin.command.CreateItemCommand;
 import com.vincent.tools.dict.application.admin.command.UpdateDictCommand;

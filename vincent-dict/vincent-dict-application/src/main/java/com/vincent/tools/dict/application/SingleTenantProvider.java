@@ -1,6 +1,7 @@
 package com.vincent.tools.dict.application;
 
 import com.vincent.tools.dict.domain.TenantId;
+import com.vincent.tools.host.TenantProvider;
 
 import java.util.Optional;
 
