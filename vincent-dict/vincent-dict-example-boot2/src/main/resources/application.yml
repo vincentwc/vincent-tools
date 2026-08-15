@@ -1,0 +1,14 @@
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/vincent_dict?useSSL=false&characterEncoding=utf8
+    username: vincent_dict
+    password: vincent_dict
+    driver-class-name: com.mysql.jdbc.Driver
+
+vincent:
+  dict:
+    enabled: true
+    admin:
+      enabled: false

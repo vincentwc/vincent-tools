@@ -21,5 +21,6 @@
         <module>vincent-dict-web</module>
         <module>vincent-dict-boot2-starter</module>
         <module>vincent-dict-cache-redis-boot2-starter</module>
+        <module>vincent-dict-example-boot2</module>
     </modules>
 </project>
