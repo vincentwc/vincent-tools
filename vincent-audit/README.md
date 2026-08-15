@@ -2,7 +2,7 @@
 
 嵌入式操作审计组件：显式 `AuditService.record()` / `search()`、MySQL 持久化、Boot 2 Starter、可选只读管理页。
 
-**宿主接入说明见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。**
+**宿主接入说明见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。架构说明见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。**
 
 ## 模块
 

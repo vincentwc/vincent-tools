@@ -2,7 +2,7 @@
 
 嵌入式字典组件。业务系统导入 BOM、只引入核心 Starter、手工执行 SQL，并提供宿主 `DataSource` 与可选 `TenantProvider` 后，即可注入 `DictQueryService` 查询默认项与租户生效项。
 
-**详细接入步骤、配置说明、管理端 API 与验收清单见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。**
+**详细接入步骤、配置说明、管理端 API 与验收清单见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。架构说明见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。**
 
 Vincent Dict never runs DDL at application startup.
 

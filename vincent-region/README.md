@@ -2,6 +2,9 @@
 
 中国省市区三级树查询组件：Java `RegionQueryService`、MySQL 参考数据、Boot 2 Starter、可选只读管理 API。
 
+- 接入指南：[docs/INTEGRATION.md](docs/INTEGRATION.md)
+- 架构说明：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
 ## 模块
 
 | 模块 | 说明 |
