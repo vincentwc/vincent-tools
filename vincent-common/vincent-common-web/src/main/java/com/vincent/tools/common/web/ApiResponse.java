@@ -1,4 +1,4 @@
-package com.vincent.tools.dict.web;
+package com.vincent.tools.common.web;
 
 public final class ApiResponse<T> {
     private final boolean success;

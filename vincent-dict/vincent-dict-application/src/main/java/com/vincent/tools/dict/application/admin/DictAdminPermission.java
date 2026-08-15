@@ -1,6 +1,8 @@
 package com.vincent.tools.dict.application.admin;
 
-public enum DictAdminPermission {
+import com.vincent.tools.host.VincentPermission;
+
+public enum DictAdminPermission implements VincentPermission {
     DICT_VIEW,
     DICT_CREATE,
     DICT_UPDATE,
@@ -11,5 +13,10 @@ public enum DictAdminPermission {
     ITEM_UPDATE,
     ITEM_ENABLE_DISABLE,
     ITEM_DELETE,
-    ITEM_RESTORE
+    ITEM_RESTORE;
+
+    @Override
+    public String code() {
+        return name();
+    }
 }

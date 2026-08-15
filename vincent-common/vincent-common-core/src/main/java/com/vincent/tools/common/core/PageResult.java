@@ -1,4 +1,4 @@
-package com.vincent.tools.dict.application.admin;
+package com.vincent.tools.common.core;
 
 import java.util.ArrayList;
 import java.util.Collections;

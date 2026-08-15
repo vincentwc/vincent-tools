@@ -1,7 +1,11 @@
 package com.vincent.tools.dict.application.admin;
 
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.DictItemView;
 import com.vincent.tools.dict.application.DictLimits;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
+import com.vincent.tools.host.VincentPermission;
 import com.vincent.tools.dict.application.admin.command.CreateDictCommand;
 import com.vincent.tools.dict.application.admin.command.CreateItemCommand;
 import com.vincent.tools.dict.application.admin.command.UpdateDictCommand;
@@ -597,8 +601,8 @@ class DefaultDictAdminServiceTest {
         }
 
         @Override
-        public boolean hasPermission(DictAdminPermission permission, Optional<String> targetTenantId) {
-            PermissionCheck check = new PermissionCheck(permission, targetTenantId);
+        public boolean hasPermission(VincentPermission permission, Optional<String> targetTenantId) {
+            PermissionCheck check = new PermissionCheck((DictAdminPermission) permission, targetTenantId);
             checks.add(check);
             return !denyAll && !denied.contains(check);
         }

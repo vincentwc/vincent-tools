@@ -1,7 +1,7 @@
 package com.vincent.tools.dict.example;
 
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.PermissionProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

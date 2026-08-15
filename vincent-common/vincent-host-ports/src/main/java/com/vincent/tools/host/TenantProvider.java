@@ -1,4 +1,4 @@
-package com.vincent.tools.dict.application;
+package com.vincent.tools.host;
 
 import java.util.Optional;
 

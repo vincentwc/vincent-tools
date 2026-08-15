@@ -1,6 +1,6 @@
 package com.vincent.tools.dict.application.port;
 
-import com.vincent.tools.dict.application.admin.PageResult;
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.admin.query.DictPageQuery;
 import com.vincent.tools.dict.application.admin.query.ItemPageQuery;
 import com.vincent.tools.dict.application.admin.view.DictItemDetail;

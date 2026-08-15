@@ -1,6 +1,6 @@
 package com.vincent.tools.dict.example;
 
-import com.vincent.tools.dict.application.TenantProvider;
+import com.vincent.tools.host.TenantProvider;
 
 import java.util.Optional;
 

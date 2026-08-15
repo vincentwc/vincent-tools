@@ -1,7 +1,7 @@
 package com.vincent.tools.dict.web;
 
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.PermissionProvider;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;

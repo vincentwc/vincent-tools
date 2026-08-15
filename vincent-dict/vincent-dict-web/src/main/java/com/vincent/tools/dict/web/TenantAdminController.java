@@ -1,9 +1,10 @@
 package com.vincent.tools.dict.web;
 
+import com.vincent.tools.common.core.PageResult;
+import com.vincent.tools.common.web.ApiResponse;
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
-import com.vincent.tools.dict.application.admin.PageResult;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
+import com.vincent.tools.host.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantOption;
 import com.vincent.tools.dict.domain.DictErrorCode;
 import com.vincent.tools.dict.domain.DictException;

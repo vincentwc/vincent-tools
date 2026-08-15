@@ -3,6 +3,7 @@ package com.vincent.tools.dict.application;
 import com.vincent.tools.dict.application.port.DictQueryRepository;
 import com.vincent.tools.dict.application.port.DictCache;
 import com.vincent.tools.dict.application.port.NoopDictCache;
+import com.vincent.tools.host.TenantProvider;
 import com.vincent.tools.dict.domain.DictCode;
 import com.vincent.tools.dict.domain.DictErrorCode;
 import com.vincent.tools.dict.domain.DictException;

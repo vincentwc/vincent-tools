@@ -69,6 +69,8 @@ GRANT SELECT ON <database>.vin_dict_item TO 'app'@'%';
 
 ## TenantProvider
 
+`TenantProvider`、`OperatorProvider`、`PermissionProvider` 接口定义在 `vincent-host-ports` 模块（`com.vincent.tools.host`），由 dict Starter 传递依赖；宿主只需注册 Bean，无需单独引入该模块。
+
 无参查询通过宿主 `TenantProvider` 解析当前租户：
 
 ```java

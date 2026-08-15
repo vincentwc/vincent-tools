@@ -3,12 +3,13 @@ package com.vincent.tools.dict.boot2;
 import com.vincent.tools.dict.application.DictLimits;
 import com.vincent.tools.dict.application.DictQueryService;
 import com.vincent.tools.dict.application.SingleTenantProvider;
-import com.vincent.tools.dict.application.TenantProvider;
 import com.vincent.tools.dict.application.admin.DefaultDictAdminService;
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
 import com.vincent.tools.dict.application.admin.DictAdminService;
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
+import com.vincent.tools.host.TenantProvider;
+import com.vincent.tools.host.VincentPermission;
 import com.vincent.tools.dict.application.port.DictAdminRepository;
 import com.vincent.tools.dict.application.port.DictCache;
 import com.vincent.tools.dict.application.port.NoopDictCache;
@@ -282,7 +283,7 @@ class DictCoreAutoConfigurationTest {
         PermissionProvider permissionProvider() {
             return new PermissionProvider() {
                 @Override
-                public boolean hasPermission(DictAdminPermission permission, Optional<String> targetTenantId) {
+                public boolean hasPermission(VincentPermission permission, Optional<String> targetTenantId) {
                     return true;
                 }
             };

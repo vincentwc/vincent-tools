@@ -1,8 +1,8 @@
 package com.vincent.tools.dict.example;
 
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PageResult;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.common.core.PageResult;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import com.vincent.tools.dict.application.admin.TenantOption;
 import org.springframework.context.annotation.Bean;

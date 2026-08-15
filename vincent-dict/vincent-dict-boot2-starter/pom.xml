@@ -15,6 +15,10 @@
     <dependencies>
         <dependency>
             <groupId>com.vincent.tools</groupId>
+            <artifactId>vincent-common-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.vincent.tools</groupId>
             <artifactId>vincent-dict-infra-mybatis</artifactId>
         </dependency>
         <dependency>

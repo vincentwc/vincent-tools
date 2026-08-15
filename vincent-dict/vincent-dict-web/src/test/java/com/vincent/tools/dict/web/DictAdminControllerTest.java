@@ -1,12 +1,12 @@
 package com.vincent.tools.dict.web;
 
+import com.vincent.tools.common.core.PageResult;
 import com.vincent.tools.dict.application.DictLimits;
 import com.vincent.tools.dict.application.admin.DefaultDictAdminService;
 import com.vincent.tools.dict.application.admin.DictAdminPermission;
 import com.vincent.tools.dict.application.admin.DictAdminService;
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PageResult;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import com.vincent.tools.dict.application.admin.TenantOption;
 import com.vincent.tools.dict.application.admin.query.DictPageQuery;

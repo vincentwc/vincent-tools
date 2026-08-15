@@ -50,6 +50,26 @@
                 <artifactId>vincent-dict-cache-redis-boot2-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-host-ports</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-common-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-common-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-common-cache-redis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

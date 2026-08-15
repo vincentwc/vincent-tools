@@ -1,8 +1,8 @@
 package com.vincent.tools.dict.web;
 
 import com.vincent.tools.dict.application.admin.DictAdminService;
-import com.vincent.tools.dict.application.admin.OperatorProvider;
-import com.vincent.tools.dict.application.admin.PermissionProvider;
+import com.vincent.tools.host.OperatorProvider;
+import com.vincent.tools.host.PermissionProvider;
 import com.vincent.tools.dict.application.admin.TenantDirectory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;

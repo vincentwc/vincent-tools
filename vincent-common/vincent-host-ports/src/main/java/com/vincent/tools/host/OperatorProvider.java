@@ -1,4 +1,4 @@
-package com.vincent.tools.dict.application.admin;
+package com.vincent.tools.host;
 
 public interface OperatorProvider {
     String currentOperatorId();
