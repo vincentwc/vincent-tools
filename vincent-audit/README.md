@@ -2,6 +2,8 @@
 
 嵌入式操作审计组件：显式 `AuditService.record()` / `search()`、MySQL 持久化、Boot 2 Starter、可选只读管理页。
 
+**宿主接入说明见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。**
+
 ## 模块
 
 | 模块 | 说明 |
@@ -19,7 +21,7 @@
 1. 执行 `sql/mysql/1.0.0/001-init.sql`
 2. 引入 BOM + `vincent-audit-boot2-starter`
 3. 实现 `OperatorProvider`；启用管理页时需 `PermissionProvider`
-4. 可选：`TenantProvider`（无显式 tenant 的 record/search 场景）
+4. 可选：`TenantProvider`、`AuditContextProvider`
 
 ```yaml
 vincent:
@@ -34,7 +36,7 @@ vincent:
 ## 验收
 
 ```bash
-mvn -P '!jdk-17' test
+mvn -P '!jdk-17' verify
 ```
 
-详见 `vincent-audit-example-boot2` 集成测试。
+详见 `vincent-audit-example-boot2` 集成测试与 [docs/INTEGRATION.md](docs/INTEGRATION.md)。
