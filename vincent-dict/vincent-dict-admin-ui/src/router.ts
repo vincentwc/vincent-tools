@@ -1,18 +1,20 @@
-import { defineComponent, h } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import DictDetailView from './views/DictDetailView.vue';
+import DictListView from './views/DictListView.vue';
 
-const Placeholder = defineComponent({
-  name: 'Placeholder',
-  setup() {
-    return () => h('div');
+function resolveHistoryBase(): string {
+  const configured = globalThis.window?.__VIN_DICT_CONFIG__?.historyBase;
+  if (configured && configured.length > 0) {
+    return configured;
   }
-});
+  return '/';
+}
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(resolveHistoryBase()),
   routes: [
-    { path: '/', name: 'dicts', component: Placeholder },
-    { path: '/dicts/:dictId', name: 'dict-detail', component: Placeholder },
+    { path: '/', name: 'dicts', component: DictListView },
+    { path: '/dicts/:dictId', name: 'dict-detail', component: DictDetailView },
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 });

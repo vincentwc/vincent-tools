@@ -2,6 +2,7 @@
 
 interface VinDictConfig {
   apiPath?: string;
+  historyBase?: string;
 }
 
 interface Window {

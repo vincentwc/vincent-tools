@@ -10,6 +10,10 @@ export default defineConfig({
     assetsDir: 'assets'
   },
   test: {
-    environment: 'node'
+    environment: 'happy-dom',
+    environmentMatchGlobs: [
+      ['src/api/**', 'node']
+    ],
+    setupFiles: ['./src/test/setup.ts']
   }
 });
