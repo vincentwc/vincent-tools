@@ -32,6 +32,23 @@ public class DictSchemaValidator {
     }
 
     private static DictException toDictException(SchemaValidationException ex) {
-        return new DictException(DictErrorCode.valueOf(ex.errorCode()), ex.getMessage());
+        return new DictException(DictErrorCode.valueOf(ex.errorCode()), dictMessage(ex));
+    }
+
+    private static String dictMessage(SchemaValidationException ex) {
+        String message = ex.getMessage();
+        if (SchemaValidationException.SCHEMA_VERSION_MISMATCH.equals(ex.errorCode())) {
+            return "dictionary schema version must be " + REQUIRED_VERSION + ", apply " + INIT_SQL_PATH;
+        }
+        if (SchemaValidationException.SCHEMA_MISSING.equals(ex.errorCode())) {
+            if (message != null && message.startsWith("missing table ")) {
+                String table = message.substring("missing table ".length(), message.indexOf(", apply "));
+                return "missing dictionary table " + table + ", apply " + INIT_SQL_PATH;
+            }
+            if (message != null && message.startsWith("failed to read schema, apply ")) {
+                return "failed to read dictionary schema, apply " + INIT_SQL_PATH;
+            }
+        }
+        return message;
     }
 }
