@@ -37,6 +37,9 @@ class AuditExampleIT {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private ExampleAuditedService exampleAuditedService;
+
     @MockBean
     private PermissionProvider permissionProvider;
 
@@ -48,6 +51,19 @@ class AuditExampleIT {
     @BeforeEach
     void allowView() {
         when(permissionProvider.hasPermission(any(AuditPermission.class), anyOptional())).thenReturn(Boolean.TRUE);
+    }
+
+    @Test
+    void auditedAnnotationRecordsThroughAuditService() {
+        String created = exampleAuditedService.createDemoItem("42");
+        assertThat(created).isEqualTo("demo-42");
+
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/vincent/audit/admin/api/v1/records?tenantId=tenant-a&action=CREATE&resourceType=DEMO_ITEM",
+                String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("demo-42");
+        assertThat(response.getBody()).contains("CREATE");
     }
 
     @Test

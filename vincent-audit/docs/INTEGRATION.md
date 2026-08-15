@@ -12,7 +12,7 @@
 | --- | --- | --- | --- |
 | 业务代码注入 `AuditService.record()` 写审计 | 否 | 否 | **Phase 1 核心路径**；批处理/消息消费用显式 tenant |
 | 运维/合规在浏览器检索审计 | 是（Servlet） | 是 | 只读；需 `spring-boot-starter-web` + 宿主权限适配器 |
-| `@Audited` 注解糖层 | 否/是均可 | 否 | **Phase 2**；第一版请显式调用 `record()` |
+| `@Audited` 注解糖层 | 否/是均可 | 否 | 可选 `vincent-audit-aop-boot2-starter`；复杂场景仍建议显式 `record()` |
 
 **不提供**：Flyway/Liquibase 自动建表、匿名公共查询 HTTP API、审计记录的创建/修改/删除管理 API、自动 TTL 清理。
 
@@ -185,6 +185,40 @@ public class OrderService {
 **事务语义**：`record()` 加入当前 Spring 事务（若存在），与业务同 commit/rollback。
 
 **JSON 契约**：`before_json` / `after_json` 为 opaque JSON；只记变更字段或摘要，不塞完整实体图；超出 MySQL TEXT（约 64KB）时写入失败 → `INVALID_ARGUMENT`。
+
+### 3.6 可选：`@Audited` 注解（AOP Starter）
+
+简单 CRUD 可额外引入 `vincent-audit-aop-boot2-starter`（须已引入 core Starter 且存在 `AuditService` Bean）：
+
+```xml
+<dependency>
+    <groupId>com.vincent.tools</groupId>
+    <artifactId>vincent-audit-aop-boot2-starter</artifactId>
+</dependency>
+```
+
+```java
+@Service
+public class ItemService {
+    @Audited(action = "CREATE", resourceType = "ITEM", resourceId = "#result")
+    public String create(String code) {
+        return "item-" + code;
+    }
+}
+```
+
+| 配置项 | 默认 | 说明 |
+| --- | --- | --- |
+| `vincent.audit.aop.enabled` | `true` | 设为 `false` 可关闭切面（保留 Starter 依赖） |
+
+`@Audited` 属性：
+
+- `resourceId` / `targetTenantId`：SpEL，可用 `#参数名`、`#result`；`targetTenantId` 留空则走 `TenantProvider`
+- `afterCommit`：默认 `false`（与业务同事务）；`true` 时在事务提交后写入
+
+变更前后 JSON 通过宿主注册的 `AuditPayloadExtractor`（按 `resourceType` 匹配）提供；无 Extractor 时 `before_json` / `after_json` 为 null。
+
+复杂多步操作、批处理仍请显式调用 `AuditService.record()`。
 
 ---
 

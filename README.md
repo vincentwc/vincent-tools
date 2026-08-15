@@ -22,4 +22,4 @@
 
 操作审计组件（Phase 1）：显式 `AuditService.record()` 写入、分页检索、可选只读管理页。消费者说明见 [vincent-audit/README.md](vincent-audit/README.md)，接入指南见 [vincent-audit/docs/INTEGRATION.md](vincent-audit/docs/INTEGRATION.md)。
 
-与 dict 共用 `vincent-host-ports`（`TenantProvider`、`OperatorProvider`、`PermissionProvider`），宿主只需实现一次 Provider。表前缀 `vin_audit_*`，可与 `vin_dict_*` 同库。第一版不含 `@Audited` AOP（Phase 2）。
+与 dict 共用 `vincent-host-ports`（`TenantProvider`、`OperatorProvider`、`PermissionProvider`），宿主只需实现一次 Provider。表前缀 `vin_audit_*`，可与 `vin_dict_*` 同库。可选 `@Audited` AOP 见 `vincent-audit-aop-boot2-starter`。
