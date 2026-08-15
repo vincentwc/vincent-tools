@@ -18,10 +18,14 @@ import static org.mockito.Mockito.mock;
 
 class DictAdminWebAutoConfigurationTest {
     private final WebApplicationContextRunner webRunner = new WebApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(DictAdminWebAutoConfiguration.class));
+            .withConfiguration(AutoConfigurations.of(
+                    DictAdminWebAutoConfiguration.class,
+                    DictAdminDisabledWebAutoConfiguration.class));
 
     private final ApplicationContextRunner noneRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(DictAdminWebAutoConfiguration.class));
+            .withConfiguration(AutoConfigurations.of(
+                    DictAdminWebAutoConfiguration.class,
+                    DictAdminDisabledWebAutoConfiguration.class));
 
     @Test
     void web_application_type_none_does_not_load_auto_configuration() {
@@ -30,6 +34,8 @@ class DictAdminWebAutoConfigurationTest {
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context).doesNotHaveBean(DictAdminWebAutoConfiguration.class);
+                    assertThat(context).doesNotHaveBean(DictAdminDisabledWebAutoConfiguration.class);
+                    assertThat(context).doesNotHaveBean(DictAdminDisabledResourceFilter.class);
                     assertThat(context).doesNotHaveBean(DictAdminController.class);
                     assertThat(context).doesNotHaveBean(DictAdminPageController.class);
                     assertThat(context).doesNotHaveBean(DictAdminResourceHandler.class);
@@ -44,6 +50,8 @@ class DictAdminWebAutoConfigurationTest {
                     assertThat(context).hasNotFailed();
                     assertThat(context).doesNotHaveBean(DictAdminWebAutoConfiguration.class);
                     assertThat(context).doesNotHaveBean(DictAdminController.class);
+                    assertThat(context).hasSingleBean(DictAdminDisabledWebAutoConfiguration.class);
+                    assertThat(context).hasSingleBean(DictAdminDisabledResourceFilter.class);
                 });
     }
 
@@ -87,6 +95,7 @@ class DictAdminWebAutoConfigurationTest {
                     assertThat(context).hasSingleBean(DictAdminResourceHandler.class);
                     assertThat(context).hasSingleBean(DictAdminPageAuthFilter.class);
                     assertThat(context).hasSingleBean(DictWebExceptionHandler.class);
+                    assertThat(context).doesNotHaveBean(DictAdminDisabledResourceFilter.class);
                 });
     }
 

@@ -30,6 +30,8 @@ class NonWebClasspathIT {
         assertNoBeans("com.vincent.tools.dict.web.DictAdminPageController");
         assertNoBeans("com.vincent.tools.dict.web.DictAdminResourceHandler");
         assertNoBeans("com.vincent.tools.dict.web.DictAdminPageAuthFilter");
+        assertNoBeans("com.vincent.tools.dict.web.DictAdminDisabledResourceFilter");
+        assertNoBeans("com.vincent.tools.dict.web.DictAdminDisabledWebAutoConfiguration");
         assertThat(context.getClass().getName()).doesNotContain("WebApplicationContext");
     }
 
