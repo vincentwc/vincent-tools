@@ -1,0 +1,15 @@
+import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [vue()],
+  base: './',
+  build: {
+    outDir: 'target/classes/META-INF/resources/dict-admin',
+    emptyOutDir: true,
+    assetsDir: 'assets'
+  },
+  test: {
+    environment: 'node'
+  }
+});
