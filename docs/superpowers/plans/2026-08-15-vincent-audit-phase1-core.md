@@ -156,3 +156,15 @@
 | 管理页 | 6, 7 |
 | example IT | 8 |
 | 全量 test | 8 |
+
+---
+
+## 后续 Phase 计划文档
+
+| Phase | 计划 |
+| --- | --- |
+| Phase 2 `@Audited` AOP | [2026-08-15-vincent-audit-phase2-aop.md](2026-08-15-vincent-audit-phase2-aop.md) |
+| Phase 3 ID / Export | [2026-08-15-vincent-common-phase3-id-export.md](2026-08-15-vincent-common-phase3-id-export.md) |
+| Phase 4 Region | [2026-08-15-vincent-region-phase4-query.md](2026-08-15-vincent-region-phase4-query.md) |
+
+路线图总览见 [../specs/2026-08-15-vincent-tools-roadmap-design.md](../specs/2026-08-15-vincent-tools-roadmap-design.md)。

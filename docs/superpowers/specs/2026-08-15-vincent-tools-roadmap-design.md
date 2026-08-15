@@ -387,13 +387,13 @@ public interface SegmentAllocator {
 
 ## 10. 分阶段实施
 
-| 阶段 | 内容 | 验收 |
-| --- | --- | --- |
-| Phase 0 | 一次性抽取 §6 全部 6 项至 4 个 common 模块；dict 重构依赖 common，零行为变化 | `mvn -P '!jdk-17' test` 全量通过；BOM 新增 common 坐标；dict 对外 Starter 行为不变 |
-| Phase 1 | `vincent-audit` core + `vincent-audit-example-boot2` | 见 §10.1 checklist |
-| Phase 2 | `vincent-audit-aop-boot2-starter` | `@Audited` 在简单 CRUD 场景可用；复杂场景仍走显式 API |
-| Phase 3 | `vincent-id-core`、`vincent-export-core`（EasyExcel） | 纯库单测；示例用法写入 README |
-| Phase 4 | `vincent-region` | 三级树查询与管理；复用 common 模块 |
+| 阶段 | 内容 | 验收 | 实施计划 |
+| --- | --- | --- | --- |
+| Phase 0 | 一次性抽取 §6 全部 6 项至 4 个 common 模块；dict 重构依赖 common，零行为变化 | `mvn -P '!jdk-17' test` 全量通过；BOM 新增 common 坐标；dict 对外 Starter 行为不变 | [Phase 0 计划](plans/2026-08-15-vincent-tools-phase0-common.md) |
+| Phase 1 | `vincent-audit` core + `vincent-audit-example-boot2` | 见 §10.1 checklist | [Phase 1 计划](plans/2026-08-15-vincent-audit-phase1-core.md) |
+| Phase 2 | `vincent-audit-aop-boot2-starter` | `@Audited` 在简单 CRUD 场景可用；复杂场景仍走显式 API | [Phase 2 计划](plans/2026-08-15-vincent-audit-phase2-aop.md) |
+| Phase 3 | `vincent-id-core`、`vincent-export-core`（EasyExcel） | 纯库单测；示例用法写入 README | [Phase 3 计划](plans/2026-08-15-vincent-common-phase3-id-export.md) |
+| Phase 4 | `vincent-region` | 三级树查询与管理；复用 common 模块 | [Phase 4 计划](plans/2026-08-15-vincent-region-phase4-query.md) |
 
 每个 Phase 独立可发布，不阻塞已有 dict 消费者。
 
