@@ -14,6 +14,8 @@
 | `vincent-audit-web` | 只读管理 API 与 SPA 注入 |
 | `vincent-audit-admin-ui` | 管理页静态资源（Vite 构建） |
 | `vincent-audit-boot2-starter` | Spring Boot 2 自动装配 |
+| `vincent-audit-aop` | `@Audited` 注解与 `AuditPayloadExtractor` 端口 |
+| `vincent-audit-aop-boot2-starter` | 可选 AOP 糖层 Starter |
 | `vincent-audit-example-boot2` | 仓库内端到端验收（不进 BOM） |
 
 ## 快速开始

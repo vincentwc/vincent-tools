@@ -100,6 +100,16 @@
                 <artifactId>vincent-audit-boot2-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-aop</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-audit-aop-boot2-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

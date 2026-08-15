@@ -16,10 +16,12 @@
     <modules>
         <module>vincent-audit-domain</module>
         <module>vincent-audit-application</module>
+        <module>vincent-audit-aop</module>
         <module>vincent-audit-infra-mybatis</module>
         <module>vincent-audit-admin-ui</module>
         <module>vincent-audit-web</module>
         <module>vincent-audit-boot2-starter</module>
+        <module>vincent-audit-aop-boot2-starter</module>
         <module>vincent-audit-example-boot2</module>
     </modules>
 </project>
