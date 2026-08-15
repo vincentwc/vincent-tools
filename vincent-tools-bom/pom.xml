@@ -72,6 +72,21 @@
             </dependency>
             <dependency>
                 <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-id-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-export-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>${easyexcel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
                 <artifactId>vincent-audit-domain</artifactId>
                 <version>${project.version}</version>
             </dependency>

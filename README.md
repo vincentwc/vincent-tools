@@ -23,3 +23,12 @@
 操作审计组件（Phase 1）：显式 `AuditService.record()` 写入、分页检索、可选只读管理页。消费者说明见 [vincent-audit/README.md](vincent-audit/README.md)，接入指南见 [vincent-audit/docs/INTEGRATION.md](vincent-audit/docs/INTEGRATION.md)。
 
 与 dict 共用 `vincent-host-ports`（`TenantProvider`、`OperatorProvider`、`PermissionProvider`），宿主只需实现一次 Provider。表前缀 `vin_audit_*`，可与 `vin_dict_*` 同库。可选 `@Audited` AOP 见 `vincent-audit-aop-boot2-starter`。
+
+## Vincent ID / Export（Phase 3 纯库）
+
+| 模块 | 说明 |
+| --- | --- |
+| `vincent-id-core` | 雪花 ID、`BusinessNumberFormatter`、`SegmentAllocator` 端口 |
+| `vincent-export-core` | EasyExcel 流式读写封装 |
+
+详见各模块 README：`vincent-common/vincent-id-core/README.md`、`vincent-common/vincent-export-core/README.md`。
