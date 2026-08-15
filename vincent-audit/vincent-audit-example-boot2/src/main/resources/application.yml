@@ -1,0 +1,16 @@
+spring:
+  main:
+    web-application-type: servlet
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/vincent_audit?useSSL=false&characterEncoding=utf8
+    username: vincent_audit
+    password: vincent_audit
+    driver-class-name: com.mysql.jdbc.Driver
+
+vincent:
+  audit:
+    enabled: true
+    admin:
+      enabled: true
+      base-path: /audit-admin
+      api-path: /vincent/audit/admin/api/v1

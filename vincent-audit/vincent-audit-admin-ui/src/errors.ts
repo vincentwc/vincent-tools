@@ -1,0 +1,11 @@
+import { ApiError } from './api/http';
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return '请求失败';
+}

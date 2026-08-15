@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.vincent.tools.audit.boot2.AuditCoreAutoConfiguration,\
+com.vincent.tools.audit.web.AuditAdminWebAutoConfiguration,\
+com.vincent.tools.audit.web.AuditAdminDisabledWebAutoConfiguration

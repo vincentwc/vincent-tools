@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.vincent.tools</groupId>
+        <artifactId>vincent-tools</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>vincent-audit</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>vincent-audit-domain</module>
+        <module>vincent-audit-application</module>
+        <module>vincent-audit-infra-mybatis</module>
+        <module>vincent-audit-admin-ui</module>
+        <module>vincent-audit-web</module>
+        <module>vincent-audit-boot2-starter</module>
+        <module>vincent-audit-example-boot2</module>
+    </modules>
+</project>
