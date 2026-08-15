@@ -2,6 +2,8 @@
 
 嵌入式字典组件。业务系统导入 BOM、只引入核心 Starter、手工执行 SQL，并提供宿主 `DataSource` 与可选 `TenantProvider` 后，即可注入 `DictQueryService` 查询默认项与租户生效项。
 
+**详细接入步骤、配置说明、管理端 API 与验收清单见 [docs/INTEGRATION.md](docs/INTEGRATION.md)。**
+
 Vincent Dict never runs DDL at application startup.
 
 ## 根父 POM、BOM 与功能 Starter
@@ -160,7 +162,7 @@ vincent:
       api-path: /vincent/dict/admin/api/v1
 ```
 
-- **SPA**：`GET {base-path}`，默认 `/dict-admin`。页面 HTML 会在应用脚本之前注入 `window.__VIN_DICT_CONFIG__`（`apiPath`、`historyBase`）。
+- **SPA**：`GET {base-path}`，默认 `/dict-admin`。页面 HTML 会在应用脚本之前注入 `<base href="{base-path}/">` 与 `window.__VIN_DICT_CONFIG__`（`apiPath`、`historyBase`）。**第一版请保持默认 `base-path: /dict-admin`**；自定义页面路径需与前端静态资源前缀一致，否则可能出现白屏。
 - **API**：`{api-path}`，默认 `/vincent/dict/admin/api/v1`。
 - **操作人**：`OperatorProvider.currentOperatorId()` 必须返回非空、无需去空白、最长 64 字符的标识，写入元数据使用该值。
 - **权限**：每次管理操作都调用 `PermissionProvider.hasPermission(permission, targetTenantId)`。租户条目的创建/修改/启停/删除/恢复必须带目标租户 ID；默认字典/默认条目使用空 `Optional`。
@@ -220,4 +222,4 @@ CONFIGURATION_INVALID
 
 ## 最小示例
 
-`vincent-dict-example-boot2` 是非 Web 的 Spring Boot `2.2.6.RELEASE` / Java 8 宿主：常规配置只依赖核心 Starter，注册 `TenantProvider`，由集成测试在 Spring 启动前手工执行初始化 SQL 与演示数据。演示数据只存在于测试资源，不会进入 Starter。Redis Starter 与 `StringRedisTemplate` 只出现在示例模块的测试作用域，用来证明跨实例失效；不要把它们当成常规示例运行时的必需依赖。
+`vincent-dict-example-boot2` 是仓库内的 Boot 2.2.6 / Java 8 演示宿主：依赖核心 Starter + Web，默认开启管理端，便于本地验收。演示适配器（操作人 `example-admin`、全放行权限、内存租户目录）**仅供仓库内试用**，不要照搬到生产。演示 SQL 见 `vincent-dict-example-boot2/src/test/resources/demo-data.sql`。Redis Starter 仅出现在示例模块测试作用域。
