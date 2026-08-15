@@ -2,7 +2,7 @@
 
 可持续扩展的通用 Java 工具仓库。当前已交付 `vincent-dict`（字典）、`vincent-audit`（操作审计）、`vincent-region`（省市区查询）与 `vincent-common` 纯库（ID / Export）；共享模块 `vincent-host-ports`、`vincent-common-core`、`vincent-common-web`、`vincent-common-cache-redis` 供各嵌入式组件复用。
 
-**整体架构**见 [docs/architecture/README.md](docs/architecture/README.md)。
+**整体架构**见 [docs/architecture/README.md](docs/architecture/README.md)。**需求清单**见 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)。
 
 ## 三种制品，不要混用
 

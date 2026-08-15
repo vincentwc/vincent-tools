@@ -1,5 +1,7 @@
 # Vincent Tools 工具包路线图设计
 
+> **需求单一入口**（已交付 / 可选 / 未启动 / 不做）：[docs/REQUIREMENTS.md](../../REQUIREMENTS.md)
+
 ## 1. 背景与目标
 
 `vincent-tools` 是可复用的 Java 工具仓库。业务系统开发时导入 `vincent-tools-bom`，按需引入 Starter 或纯 Java 库，即可获得通用能力，避免每个项目重复实现字典、审计、编号、导出等基础设施。
@@ -49,8 +51,8 @@ MySQL                5.7+
 | P0（Phase 0） | `vincent-common-web` | 统一 API 响应体 `ApiResponse`、异常映射基类、SPA HTML 注入工具 |
 | P0（Phase 0） | `vincent-common-core` | `PageResult` 分页模型、编码校验、Schema 版本只读校验、`VincentInfrastructureResolver` |
 | P0（Phase 0） | `vincent-common-cache-redis` | 版本号失效 Redis 缓存、故障降级、限流日志（从 dict Redis Starter 抽象） |
-| P1 | `vincent-id-core` | 分布式 ID 与业务编号生成（雪花、号段、带前缀格式化） |
-| P1 | `vincent-export-core` | 基于 **EasyExcel** 的 Excel/CSV 流式导入导出（BOM 锁定 Java 8 兼容版本） |
+| P1 | `vincent-id-core` | 分布式 ID 与业务编号生成（雪花、号段、带前缀格式化） | ✅ 已完成 Phase 3（PR #9） |
+| P1 | `vincent-export-core` | 基于 **EasyExcel** 的 Excel 流式导入导出（BOM 锁定 Java 8 兼容版本） | ✅ 已完成 Phase 3（PR #9） |
 
 ### 4.2 嵌入式组件
 
@@ -58,10 +60,10 @@ MySQL                5.7+
 
 | 优先级 | 模块 | 职责 | 状态 |
 | --- | --- | --- | --- |
-| — | `vincent-dict` | 字典与字典项查询、默认项与租户追加 | 已完成 |
-| P0 | `vincent-audit` | 操作审计记录与检索 | 下一个 |
-| P1 | `vincent-region` | 省市区树查询与管理 | 待做 |
-| P2 | `vincent-file` | 附件元数据与存储端口（本地/OSS 由宿主实现） | 待做 |
+| — | `vincent-dict` | 字典与字典项查询、默认项与租户追加 | ✅ 已完成（PR #1） |
+| P0 | `vincent-audit` | 操作审计记录与检索 | ✅ 已完成 Phase 1–2（PR #4–#8） |
+| P1 | `vincent-region` | 省市区树查询与只读管理 API | ✅ 已完成 Phase 4（PR #10） |
+| P2 | `vincent-file` | 附件元数据与存储端口（本地/OSS 由宿主实现） | 🔮 已概要规划，未启动 |
 
 ### 4.3 明确不做
 
@@ -505,4 +507,18 @@ Resolved in Round 3:
   - region API → findByCode + listChildren 最小集（方案 A）
 ```
 
-**结论**：路线图 Phase 0–4 全部组件第一版边界已闭合；可进入 writing-plans 写 Phase 0 计划。
+**结论**：路线图 Phase 0–4 全部组件第一版边界已闭合；Phase 0–4 **已于 2026-08-15 全部交付**（见 [需求清单](../../REQUIREMENTS.md)）。后续可选增强与 `vincent-file` 待单独立项。
+
+## 15. 交付状态（2026-08-15 更新）
+
+| Phase | 状态 | PR |
+| --- | --- | --- |
+| Phase 0 common 抽取 | ✅ | #3 |
+| Phase 1 audit core | ✅ | #4–#7 |
+| Phase 2 audit AOP | ✅ | #8 |
+| Phase 3 id / export | ✅ | #9 |
+| Phase 4 region | ✅ | #10 |
+| 计划文档 Phase 2–4 | ✅ | #11 |
+| 接入/架构/验证文档 | ✅ | #12 |
+
+**需求单一入口**：[docs/REQUIREMENTS.md](../../REQUIREMENTS.md)

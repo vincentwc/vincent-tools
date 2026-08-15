@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** ✅ 已完成（PR #3 merged）
+
 **Goal:** 从 `vincent-dict` 零行为变化地抽取 4 个 common 模块（host-ports、common-web、common-core、common-cache-redis），更新 BOM 与 dict 依赖，全量测试通过。
 
 **Architecture:** 新建 `vincent-common/` 聚合模块；将端口、分页、Schema 校验、基础设施解析、Web 响应体、SPA 注入、Redis 限流日志等迁入 common；dict 各层改为依赖 common 并删除重复类。`DictAdminPermission` 实现 `VincentPermission`；`PermissionProvider` 签名改为接受 `VincentPermission`。
