@@ -63,6 +63,7 @@ class DictAdminPageIT {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         String html = response.getBody();
         assertThat(html).contains("Vincent Dict Admin");
+        assertThat(html).contains("<base href=\"/dict-admin/\">");
         assertThat(html).contains("window.__VIN_DICT_CONFIG__");
         assertThat(html).contains("\"apiPath\":\"/vincent/dict/admin/api/v1\"");
         assertThat(html).contains("\"historyBase\":\"/dict-admin\"");

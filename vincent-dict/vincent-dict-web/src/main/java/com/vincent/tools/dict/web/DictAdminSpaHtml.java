@@ -24,19 +24,60 @@ final class DictAdminSpaHtml {
     }
 
     static String inject(String html, String apiPath, String historyBase) {
-        String script = "<script>window.__VIN_DICT_CONFIG__={"
+        String normalizedHistoryBase = normalizeHistoryBase(historyBase);
+        String injectedHead = "<base href=\"" + htmlAttribute(normalizeBaseHref(normalizedHistoryBase)) + "\">"
+                + "<script>window.__VIN_DICT_CONFIG__={"
                 + "\"apiPath\":" + jsonString(apiPath)
-                + ",\"historyBase\":" + jsonString(historyBase)
+                + ",\"historyBase\":" + jsonString(normalizedHistoryBase)
                 + "};</script>";
+        int headOpen = indexOfIgnoreCase(html, "<head");
+        if (headOpen >= 0) {
+            int headTagEnd = html.indexOf('>', headOpen);
+            if (headTagEnd >= 0) {
+                int insertAt = headTagEnd + 1;
+                return html.substring(0, insertAt) + injectedHead + html.substring(insertAt);
+            }
+        }
         int scriptTag = indexOfIgnoreCase(html, "<script");
         if (scriptTag >= 0) {
-            return html.substring(0, scriptTag) + script + html.substring(scriptTag);
+            return html.substring(0, scriptTag) + injectedHead + html.substring(scriptTag);
         }
         int headEnd = indexOfIgnoreCase(html, "</head>");
         if (headEnd >= 0) {
-            return html.substring(0, headEnd) + script + html.substring(headEnd);
+            return html.substring(0, headEnd) + injectedHead + html.substring(headEnd);
         }
-        return script + html;
+        return injectedHead + html;
+    }
+
+    private static String normalizeHistoryBase(String historyBase) {
+        String base = historyBase == null || historyBase.length() == 0 ? "/dict-admin" : historyBase;
+        if (base.endsWith("/") && base.length() > 1) {
+            return base.substring(0, base.length() - 1);
+        }
+        return base;
+    }
+
+    private static String normalizeBaseHref(String historyBase) {
+        String base = normalizeHistoryBase(historyBase);
+        return base.endsWith("/") ? base : base + "/";
+    }
+
+    private static String htmlAttribute(String value) {
+        StringBuilder builder = new StringBuilder(value.length());
+        for (int index = 0; index < value.length(); index++) {
+            char ch = value.charAt(index);
+            switch (ch) {
+                case '&':
+                    builder.append("&amp;");
+                    break;
+                case '"':
+                    builder.append("&quot;");
+                    break;
+                default:
+                    builder.append(ch);
+            }
+        }
+        return builder.toString();
     }
 
     private static String read(Resource resource) throws IOException {

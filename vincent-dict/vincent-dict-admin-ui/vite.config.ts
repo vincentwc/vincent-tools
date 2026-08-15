@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [vue()],
-  base: './',
+  base: '/dict-admin/',
   build: {
     outDir: 'target/classes/META-INF/resources/dict-admin',
     emptyOutDir: true,

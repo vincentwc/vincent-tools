@@ -51,6 +51,7 @@ class DictAdminResourceHandlerTest {
         mockMvc.perform(get("/dict-admin/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Vincent Dict Admin")))
+                .andExpect(content().string(containsString("<base href=\"/dict-admin/\">")))
                 .andExpect(content().string(containsString("window.__VIN_DICT_CONFIG__")))
                 .andExpect(content().string(containsString("\"apiPath\":\"/vincent/dict/admin/api/v1\"")))
                 .andExpect(content().string(containsString("\"historyBase\":\"/dict-admin\"")))
