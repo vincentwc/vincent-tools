@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.vincent.tools.region.boot2.RegionCoreAutoConfiguration,\
+com.vincent.tools.region.web.RegionAdminWebAutoConfiguration

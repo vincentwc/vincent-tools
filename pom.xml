@@ -14,6 +14,7 @@
         <module>vincent-common</module>
         <module>vincent-dict</module>
         <module>vincent-audit</module>
+        <module>vincent-region</module>
     </modules>
 
     <properties>
@@ -167,6 +168,31 @@
             <dependency>
                 <groupId>com.vincent.tools</groupId>
                 <artifactId>vincent-audit-aop-boot2-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-region-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-region-application</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-region-infra-mybatis</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-region-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.vincent.tools</groupId>
+                <artifactId>vincent-region-boot2-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
