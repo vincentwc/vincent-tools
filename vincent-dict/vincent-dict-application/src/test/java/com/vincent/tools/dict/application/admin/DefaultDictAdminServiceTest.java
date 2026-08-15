@@ -351,10 +351,35 @@ class DefaultDictAdminServiceTest {
 
     @Test
     void reserved_zero_tenant_is_rejected_as_invalid_argument() {
+        fixture.denyAll();
+
         assertThatThrownBy(() -> service.createTenantItem(10L, "0", command))
                 .isInstanceOf(DictException.class)
                 .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+        assertThat(permissionChecks).isEmpty();
         assertThat(events).isEmpty();
+    }
+
+    @Test
+    void blank_and_overlong_tenant_are_rejected_before_permission_check() {
+        fixture.denyAll();
+        String overlong = overlongTenant();
+
+        assertInvalidTenantBeforePermission("");
+        assertInvalidTenantBeforePermission("   ");
+        assertInvalidTenantBeforePermission(overlong);
+    }
+
+    @Test
+    void page_items_rejects_reserved_zero_tenant_before_permission_check() {
+        fixture.denyAll();
+
+        assertThatThrownBy(() -> service.pageItems(10L,
+                new ItemPageQuery("0", null, null, null, false, 1, 20)))
+                .isInstanceOf(DictException.class)
+                .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+        assertThat(permissionChecks).isEmpty();
+        assertThat(tenantLookups).isEmpty();
     }
 
     @Test
@@ -434,6 +459,22 @@ class DefaultDictAdminServiceTest {
         assertThat(cacheEvents).isEmpty();
     }
 
+    private void assertInvalidTenantBeforePermission(String tenantId) {
+        permissionChecks.clear();
+        assertThatThrownBy(() -> service.createTenantItem(10L, tenantId, command))
+                .isInstanceOf(DictException.class)
+                .extracting("code").isEqualTo(DictErrorCode.INVALID_ARGUMENT);
+        assertThat(permissionChecks).isEmpty();
+    }
+
+    private static String overlongTenant() {
+        StringBuilder value = new StringBuilder(65);
+        for (int i = 0; i < 65; i++) {
+            value.append('x');
+        }
+        return value.toString();
+    }
+
     private static void assertInvalid(ThrowingAction action) {
         assertThatThrownBy(action::run)
                 .isInstanceOf(DictException.class)
@@ -478,6 +519,10 @@ class DefaultDictAdminServiceTest {
 
         private void deny(DictAdminPermission permission, Optional<String> targetTenantId) {
             permissionProvider.deny(permission, targetTenantId);
+        }
+
+        private void denyAll() {
+            permissionProvider.denyAll();
         }
 
         private void missingTenant(String tenantId) {
@@ -541,16 +586,21 @@ class DefaultDictAdminServiceTest {
     private static final class RecordingPermissionProvider implements PermissionProvider {
         private final List<PermissionCheck> checks = new ArrayList<PermissionCheck>();
         private final List<PermissionCheck> denied = new ArrayList<PermissionCheck>();
+        private boolean denyAll;
 
         private void deny(DictAdminPermission permission, Optional<String> targetTenantId) {
             denied.add(new PermissionCheck(permission, targetTenantId));
+        }
+
+        private void denyAll() {
+            denyAll = true;
         }
 
         @Override
         public boolean hasPermission(DictAdminPermission permission, Optional<String> targetTenantId) {
             PermissionCheck check = new PermissionCheck(permission, targetTenantId);
             checks.add(check);
-            return !denied.contains(check);
+            return !denyAll && !denied.contains(check);
         }
     }
 

@@ -158,12 +158,11 @@ public final class DefaultDictAdminService implements DictAdminService {
     @Override
     public PageResult<DictItemDetail> pageItems(long dictId, ItemPageQuery query) {
         requireQuery(query);
-        Optional<String> scope = tenantScope(query.getTenantId());
+        Optional<String> scope = requireTenantScope(query.getTenantId());
         requirePermission(DictAdminPermission.DICT_VIEW, scope);
         validatePage(query.getPage(), query.getSize());
         if (scope.isPresent()) {
-            TenantId.of(query.getTenantId());
-            requireTenantExists(query.getTenantId());
+            requireTenantExists(scope.get());
         }
         return repository.pageItems(dictId, query);
     }
@@ -185,13 +184,10 @@ public final class DefaultDictAdminService implements DictAdminService {
     @Override
     public long createTenantItem(long dictId, String tenantIdValue, CreateItemCommand command) {
         requireCommand(command);
-        if (tenantIdValue == null) {
-            throw new DictException(DictErrorCode.INVALID_ARGUMENT, "tenantId is required");
-        }
-        requirePermission(DictAdminPermission.ITEM_CREATE, Optional.of(tenantIdValue));
+        TenantId tenantId = requireExternalTenant(tenantIdValue);
+        requirePermission(DictAdminPermission.ITEM_CREATE, Optional.of(tenantId.value()));
         String operator = requireOperator();
-        TenantId tenantId = TenantId.of(tenantIdValue);
-        requireTenantExists(tenantIdValue);
+        requireTenantExists(tenantId.value());
         Instant now = Instant.now(clock);
         ItemCode code = ItemCode.of(command.getCode());
         ItemWrite write = txRunner.required(() -> createItem(dictId, tenantId, code, command, operator, now,
@@ -347,11 +343,18 @@ public final class DefaultDictAdminService implements DictAdminService {
         return Optional.of(item.tenantId().value());
     }
 
-    private static Optional<String> tenantScope(String tenantId) {
+    private static TenantId requireExternalTenant(String tenantIdValue) {
+        if (tenantIdValue == null) {
+            throw new DictException(DictErrorCode.INVALID_ARGUMENT, "tenantId is required");
+        }
+        return TenantId.of(tenantIdValue);
+    }
+
+    private static Optional<String> requireTenantScope(String tenantId) {
         if (tenantId == null || tenantId.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(tenantId);
+        return Optional.of(TenantId.of(tenantId).value());
     }
 
     private static void validatePage(int page, int size) {
