@@ -15,19 +15,107 @@
         <result column="version" property="version"/>
         <result column="deleted" property="deleted"/>
         <result column="created_by" property="createdBy"/>
-        <result column="created_at" property="createdAt"/>
+        <result column="created_at" property="createdAt"
+                typeHandler="com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler"/>
         <result column="updated_by" property="updatedBy"/>
-        <result column="updated_at" property="updatedAt"/>
+        <result column="updated_at" property="updatedAt"
+                typeHandler="com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler"/>
     </resultMap>
 
+    <sql id="itemColumns">
+        id, dict_id, tenant_id, code, name, description, status, sort_no, version, deleted,
+        created_by, created_at, updated_by, updated_at
+    </sql>
+
+    <sql id="itemPageFilters">
+        AND dict_id = #{dictId}
+        AND tenant_id = #{tenantId}
+        <if test="code != null and code != ''">
+            AND code = #{code}
+        </if>
+        <if test="name != null and name != ''">
+            AND name = #{name}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="!includeDeleted">
+            AND deleted = 0
+        </if>
+    </sql>
+
     <select id="selectEffectiveItems" resultMap="DictItemPoMap">
-        SELECT id, dict_id, tenant_id, code, name, description, status, sort_no, version, deleted,
-               created_by, created_at, updated_by, updated_at
+        SELECT <include refid="itemColumns"/>
         FROM vin_dict_item
         WHERE dict_id = #{dictId}
           AND deleted = 0
           AND status = 1
           AND tenant_id IN ('0', #{tenantId})
         ORDER BY sort_no, code, id
+    </select>
+
+    <select id="selectById" resultMap="DictItemPoMap">
+        SELECT <include refid="itemColumns"/>
+        FROM vin_dict_item
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectCodeUsage" resultMap="DictItemPoMap">
+        SELECT tenant_id, deleted FROM vin_dict_item
+        WHERE dict_id = #{dictId} AND code = #{code}
+    </select>
+
+    <select id="countUndeleted" resultType="int">
+        SELECT COUNT(*) FROM vin_dict_item WHERE dict_id = #{dictId} AND deleted = 0
+    </select>
+
+    <select id="countUndeletedByTenant" resultType="int">
+        SELECT COUNT(*)
+        FROM vin_dict_item
+        WHERE dict_id = #{dictId}
+          AND tenant_id = #{tenantId}
+          AND deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO vin_dict_item (dict_id, tenant_id, code, name, description, status, sort_no, version,
+                                   deleted, created_by, created_at, updated_by, updated_at)
+        VALUES (#{dictId}, #{tenantId}, #{code}, #{name}, #{description}, #{status}, #{sortNo}, #{version},
+                #{deleted}, #{createdBy},
+                #{createdAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler},
+                #{updatedBy},
+                #{updatedAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler})
+    </insert>
+
+    <update id="update">
+        UPDATE vin_dict_item
+        SET name = #{po.name},
+            description = #{po.description},
+            status = #{po.status},
+            sort_no = #{po.sortNo},
+            deleted = #{po.deleted},
+            updated_by = #{po.updatedBy},
+            updated_at = #{po.updatedAt, jdbcType=VARCHAR, typeHandler=com.vincent.tools.dict.infra.mybatis.UtcDateTypeHandler},
+            version = version + 1
+        WHERE id = #{po.id}
+          AND version = #{expectedVersion}
+    </update>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*)
+        FROM vin_dict_item
+        <where>
+            <include refid="itemPageFilters"/>
+        </where>
+    </select>
+
+    <select id="selectPage" resultMap="DictItemPoMap">
+        SELECT <include refid="itemColumns"/>
+        FROM vin_dict_item
+        <where>
+            <include refid="itemPageFilters"/>
+        </where>
+        ORDER BY sort_no, code, id
+        LIMIT #{offset}, #{limit}
     </select>
 </mapper>
