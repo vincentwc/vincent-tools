@@ -2,6 +2,8 @@
 
 本文描述 `vincent-tools` 仓库的制品分层、模块关系与嵌入式组件模式。各工具细节见对应 `ARCHITECTURE.md`。
 
+> **需求清单**（已交付 / 后续可选 / 未启动）：[REQUIREMENTS.md](../REQUIREMENTS.md)
+
 | 工具 | 架构文档 |
 | --- | --- |
 | 共享层 `vincent-common` | [vincent-common/docs/ARCHITECTURE.md](../vincent-common/docs/ARCHITECTURE.md) |
@@ -188,6 +190,8 @@ flowchart LR
 ## 7. 实施计划索引
 
 路线图 spec：[2026-08-15-vincent-tools-roadmap-design.md](../superpowers/specs/2026-08-15-vincent-tools-roadmap-design.md)
+
+**需求总览**：[REQUIREMENTS.md](../REQUIREMENTS.md)
 
 | Phase | 计划文档 |
 | --- | --- |

@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
 
+**Status:** ✅ 已完成（PR #4–#7 merged）
+
 **Goal:** 交付 `vincent-audit` 嵌入式组件第一版：显式 `AuditService.record/search`、MySQL 持久化、Starter 自动装配、只读管理 API 与内嵌 SPA、`vincent-audit-example-boot2` 端到端验收。不含 AOP（Phase 2）。
 
 **Architecture:** 镜像 `vincent-dict` DDD 分层；复用 `vincent-host-ports`、`vincent-common-core`（PageResult、Schema、InfrastructureResolver）、`vincent-common-web`（ApiResponse、SPA 注入）。领域层纯 Java；MyBatis 持久化；条件装配 Web 管理端。
