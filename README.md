@@ -1,6 +1,6 @@
 # vincent-tools
 
-可持续扩展的通用 Java 工具仓库。当前首个工具是 `vincent-dict`。
+可持续扩展的通用 Java 工具仓库。当前首个工具是 `vincent-dict`；Phase 0 已抽取共享模块 `vincent-common`（`vincent-host-ports`、`vincent-common-core`、`vincent-common-web`、`vincent-common-cache-redis`），供 dict 等嵌入式组件复用。
 
 ## 三种制品，不要混用
 
