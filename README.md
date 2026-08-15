@@ -1,6 +1,6 @@
 # vincent-tools
 
-可持续扩展的通用 Java 工具仓库。当前首个工具是 `vincent-dict`；Phase 0 已抽取共享模块 `vincent-common`（`vincent-host-ports`、`vincent-common-core`、`vincent-common-web`、`vincent-common-cache-redis`），供 dict 等嵌入式组件复用。
+可持续扩展的通用 Java 工具仓库。当前已交付 `vincent-dict`（字典）与 `vincent-audit`（操作审计）；Phase 0 已抽取共享模块 `vincent-common`（`vincent-host-ports`、`vincent-common-core`、`vincent-common-web`、`vincent-common-cache-redis`），供 dict、audit 等嵌入式组件复用。
 
 ## 三种制品，不要混用
 
@@ -14,6 +14,12 @@
 
 ## Vincent Dict
 
-字典查询组件。消费者说明见 [vincent-dict/README.md](vincent-dict/README.md)。
+字典查询组件。消费者说明见 [vincent-dict/README.md](vincent-dict/README.md)，接入指南见 [vincent-dict/docs/INTEGRATION.md](vincent-dict/docs/INTEGRATION.md)。
 
 兼容性基线：Java 8、Spring Boot `2.2.6.RELEASE`、MyBatis-Plus `3.3.2`、MySQL 5.7+。核心查询不依赖 Redis；跨实例缓存是按需启用的额外 Starter，需要宿主提供 `StringRedisTemplate`，默认 TTL 60 秒。Redis 健康时写入后立即可见；Redis 不可用时回退 MySQL，第一版不提供强一致性。
+
+## Vincent Audit
+
+操作审计组件（Phase 1）：显式 `AuditService.record()` 写入、分页检索、可选只读管理页。消费者说明见 [vincent-audit/README.md](vincent-audit/README.md)，接入指南见 [vincent-audit/docs/INTEGRATION.md](vincent-audit/docs/INTEGRATION.md)。
+
+与 dict 共用 `vincent-host-ports`（`TenantProvider`、`OperatorProvider`、`PermissionProvider`），宿主只需实现一次 Provider。表前缀 `vin_audit_*`，可与 `vin_dict_*` 同库。第一版不含 `@Audited` AOP（Phase 2）。
